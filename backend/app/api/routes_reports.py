@@ -1,10 +1,14 @@
 import os
 import uuid
 import base64
+import json
 from datetime import datetime
 from typing import List, Dict, Any, Optional
-from fastapi import APIRouter, HTTPException, UploadFile, File, Form
+from fastapi import APIRouter, HTTPException, Depends
+from sqlalchemy.orm import Session
 from backend.app.models.schemas import FieldReportCreate, FieldReportResponse
+from backend.app.models.db_models import FieldReport
+from backend.app.database import get_db
 from backend.app.ml.vision_model import vision_engine
 from backend.app.core.config import settings
 
@@ -24,7 +28,7 @@ REPORTS_DB: List[Dict[str, Any]] = [
         "hazard_type": "Tension Cracks",
         "road_passable": False,
         "description": "Longitudinal tension crack expanding rapidly across retaining wall crown. Seepage water spurting through weep holes.",
-        "image_url": "/static_demo/sample_crack.jpg",
+        "image_url": "/uploads/sample_crack.jpg",
         "ai_analysis": {
             "hazard_detected": True,
             "hazard_classification": "Tension Crack Network (Structural Precursor)",
@@ -51,7 +55,7 @@ REPORTS_DB: List[Dict[str, Any]] = [
         "hazard_type": "Mudslide",
         "road_passable": False,
         "description": "Massive torrent of wet mud and boulders has engulfed the road over 100 meters. Both lanes blocked, 4 trucks stranded.",
-        "image_url": "/static_demo/sample_mudslide.jpg",
+        "image_url": "/uploads/sample_mudslide.jpg",
         "ai_analysis": {
             "hazard_detected": True,
             "hazard_classification": "Massive Mudflow / Debris Avalanche",
@@ -78,7 +82,7 @@ REPORTS_DB: List[Dict[str, Any]] = [
         "hazard_type": "Road Sinking",
         "road_passable": True,
         "description": "Pavement sinking by approx 8 inches on downhill side. Single light vehicles passing carefully.",
-        "image_url": "/static_demo/sample_subsidence.jpg",
+        "image_url": "/uploads/sample_subsidence.jpg",
         "ai_analysis": {
             "hazard_detected": True,
             "hazard_classification": "Active Slope Slumping & Subsidence",
@@ -96,42 +100,92 @@ REPORTS_DB: List[Dict[str, Any]] = [
 ]
 
 @router.get("/")
-def get_reports(state: Optional[str] = None, hazard_type: Optional[str] = None, status: Optional[str] = None) -> List[Dict[str, Any]]:
-    results = REPORTS_DB
+def get_reports(state: Optional[str] = None, hazard_type: Optional[str] = None, status: Optional[str] = None, db: Session = Depends(get_db)) -> List[Dict[str, Any]]:
+    # DB results
+    query = db.query(FieldReport)
     if state:
-        results = [r for r in results if r["state"].lower() == state.lower()]
+        query = query.filter(FieldReport.state.ilike(state))
     if hazard_type:
-        results = [r for r in results if r["hazard_type"].lower() == hazard_type.lower()]
+        query = query.filter(FieldReport.hazard_type.ilike(hazard_type))
     if status:
-        results = [r for r in results if r["status"].lower() == status.lower()]
-    return results
+        query = query.filter(FieldReport.status.ilike(status))
+        
+    db_reports = query.order_by(FieldReport.created_at.desc()).all()
+    
+    db_results = []
+    for r in db_reports:
+        ai_analysis = None
+        if r.ai_hazard_classification:
+            ai_analysis = {
+                "hazard_detected": True,
+                "hazard_classification": r.ai_hazard_classification,
+                "severity_level": r.ai_severity_level,
+                "confidence_score": r.ai_confidence_score,
+                "estimated_crack_width_mm": r.ai_crack_width_mm,
+                "debris_volume_estimate": r.ai_debris_volume,
+                "ai_remarks": r.ai_remarks
+            }
+            
+        db_results.append({
+            "id": f"DB-REP-{r.id}",
+            "reporter_name": r.reporter_name,
+            "reporter_role": r.reporter_role,
+            "lat": r.lat,
+            "lng": r.lng,
+            "landmark": r.landmark,
+            "state": r.state,
+            "district": r.district,
+            "hazard_type": r.hazard_type,
+            "road_passable": r.road_passable,
+            "description": r.description,
+            "image_url": r.image_path,
+            "ai_analysis": ai_analysis,
+            "status": r.status,
+            "created_at": r.created_at.isoformat() + "Z" if r.created_at else None
+        })
+        
+    # Combine
+    combined = REPORTS_DB + db_results
+    
+    if state:
+        combined = [r for r in combined if r["state"].lower() == state.lower()]
+    if hazard_type:
+        combined = [r for r in combined if r["hazard_type"].lower() == hazard_type.lower()]
+    if status:
+        combined = [r for r in combined if r["status"].lower() == status.lower()]
+        
+    return combined
 
 @router.post("/submit")
-def submit_report(report_data: FieldReportCreate) -> Dict[str, Any]:
+def submit_report(report_data: FieldReportCreate, db: Session = Depends(get_db)) -> Dict[str, Any]:
     report_id = f"REP-{datetime.utcnow().strftime('%Y%m%d')}-{uuid.uuid4().hex[:5].upper()}"
     
     ai_result = None
     image_saved_url = None
     
     if report_data.image_base64:
-        # Run AI Vision Analysis
+        if len(report_data.image_base64) > 14000000:
+            raise HTTPException(status_code=400, detail="Image exceeds 10MB limit")
+            
+        raw_b64 = report_data.image_base64
+        if "," in raw_b64:
+            header, raw_b64 = raw_b64.split(",", 1)
+            if "image/" not in header.lower():
+                raise HTTPException(status_code=400, detail="Invalid file type. Only images are allowed.")
+        
         ai_result = vision_engine.analyze_base64(report_data.image_base64, report_data.hazard_type)
         
-        # Save image file to upload directory
         try:
-            raw_b64 = report_data.image_base64
-            if "," in raw_b64:
-                raw_b64 = raw_b64.split(",")[1]
             img_bytes = base64.b64decode(raw_b64)
             filename = f"{report_id}.jpg"
             file_path = os.path.join(settings.UPLOAD_DIR, filename)
+            os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
             with open(file_path, "wb") as f:
                 f.write(img_bytes)
             image_saved_url = f"/uploads/{filename}"
         except Exception:
             image_saved_url = None
     else:
-        # Generate baseline AI assessment from metadata
         ai_result = {
             "hazard_detected": True,
             "hazard_classification": report_data.hazard_type,
@@ -143,39 +197,63 @@ def submit_report(report_data: FieldReportCreate) -> Dict[str, Any]:
             "action_priority": "URGENT_INSPECTION" if not report_data.road_passable else "ROUTINE_MONITORING",
             "ai_remarks": "Report logged into disaster queue. Verification team notified."
         }
-
+        
+    created_date = report_data.offline_created_at or datetime.utcnow()
+    
+    db_report = FieldReport(
+        reporter_name=report_data.reporter_name or "Anonymous Citizen",
+        reporter_role=report_data.reporter_role,
+        hazard_type=report_data.hazard_type,
+        state=report_data.state,
+        district=report_data.district,
+        landmark=report_data.landmark,
+        description=report_data.description,
+        lat=report_data.lat,
+        lng=report_data.lng,
+        road_passable=report_data.road_passable,
+        image_path=image_saved_url,
+        status="VERIFIED" if ai_result and ai_result.get("severity_level") == "CRITICAL" else "INVESTIGATING",
+        severity=ai_result.get("severity_level", "MODERATE") if ai_result else "MODERATE",
+        ai_hazard_classification=ai_result.get("hazard_classification") if ai_result else None,
+        ai_severity_level=ai_result.get("severity_level") if ai_result else None,
+        ai_confidence_score=ai_result.get("confidence_score") if ai_result else None,
+        ai_crack_width_mm=ai_result.get("estimated_crack_width_mm") if ai_result else None,
+        ai_debris_volume=ai_result.get("debris_volume_estimate") if ai_result else None,
+        ai_remarks=ai_result.get("ai_remarks") if ai_result else None,
+        created_at=created_date
+    )
+    
+    db.add(db_report)
+    db.commit()
+    db.refresh(db_report)
+        
     new_report = {
-        "id": report_id,
-        "reporter_name": report_data.reporter_name or "Anonymous Citizen",
-        "reporter_role": report_data.reporter_role,
-        "lat": report_data.lat,
-        "lng": report_data.lng,
-        "landmark": report_data.landmark,
-        "state": report_data.state,
-        "district": report_data.district,
-        "hazard_type": report_data.hazard_type,
-        "road_passable": report_data.road_passable,
-        "description": report_data.description,
-        "image_url": image_saved_url,
+        "id": f"DB-REP-{db_report.id}",
+        "reporter_name": db_report.reporter_name,
+        "reporter_role": db_report.reporter_role,
+        "lat": db_report.lat,
+        "lng": db_report.lng,
+        "landmark": db_report.landmark,
+        "state": db_report.state,
+        "district": db_report.district,
+        "hazard_type": db_report.hazard_type,
+        "road_passable": db_report.road_passable,
+        "description": db_report.description,
+        "image_url": db_report.image_path,
         "ai_analysis": ai_result,
-        "status": "VERIFIED" if ai_result and ai_result.get("severity_level") == "CRITICAL" else "INVESTIGATING",
-        "created_at": (report_data.offline_created_at.isoformat() + "Z") if report_data.offline_created_at else (datetime.utcnow().isoformat() + "Z")
+        "status": db_report.status,
+        "created_at": db_report.created_at.isoformat() + "Z" if db_report.created_at else None
     }
     
-    REPORTS_DB.insert(0, new_report)
     return new_report
 
 @router.post("/sync-offline")
-def sync_offline_reports(reports: List[FieldReportCreate]) -> Dict[str, Any]:
-    """
-    Bulk synchronization endpoint for field reports queued locally in IndexedDB
-    during cellular outages in remote hill tracts.
-    """
+def sync_offline_reports(reports: List[FieldReportCreate], db: Session = Depends(get_db)) -> Dict[str, Any]:
     synced_count = 0
     synced_ids = []
     
     for item in reports:
-        res = submit_report(item)
+        res = submit_report(item, db)
         synced_count += 1
         synced_ids.append(res["id"])
         
@@ -184,4 +262,3 @@ def sync_offline_reports(reports: List[FieldReportCreate]) -> Dict[str, Any]:
         "synced_count": synced_count,
         "synced_ids": synced_ids
     }
-

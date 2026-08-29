@@ -12,7 +12,7 @@ export const LANGUAGES = [
 
 export const TRANSLATIONS = {
   en: {
-    app_title: "BhooDrishti-NER",
+    app_title: "TerraintTrace",
     app_subtitle: "AI Landslide Early Warning & GIS Platform (North East India)",
     nav_map: "Live GIS Map",
     nav_analytics: "AI Predictive Engine",
@@ -164,7 +164,7 @@ export const TRANSLATIONS = {
     recommendations: "महत्वपूर्ण निर्देश"
   },
   kha: {
-    app_title: "BhooDrishti-NER (Ka Jingiit Shaphang Ka Surok)",
+    app_title: "TerraintTrace",
     app_subtitle: "Ka lad jingiada na ka jingtwa khyndew da ka AI & GIS",
     nav_map: "Ka Map GIS",
     nav_analytics: "Ka Jingbishar AI",
@@ -202,7 +202,7 @@ export const TRANSLATIONS = {
     recommendations: "Ki Jingbthah"
   },
   lus: {
-    app_title: "BhooDrishti-NER",
+    app_title: "TerraintTrace",
     app_subtitle: "Leimin Vengtu AI & GIS Platform (HMALAM HMUN)",
     nav_map: "GIS Lemchan",
     nav_analytics: "AI Hriatlawkna",
@@ -278,7 +278,7 @@ export const TRANSLATIONS = {
     recommendations: "চত্থোক চৎশিনগী পাউজেল"
   },
   nag: {
-    app_title: "BhooDrishti-NER (Mati Gira Warning)",
+    app_title: "TerraintTrace",
     app_subtitle: "AI laga mati gira alert aru GIS map platform (North East)",
     nav_map: "Live GIS Map",
     nav_analytics: "AI Prediction",
@@ -316,4 +316,3 @@ export const TRANSLATIONS = {
     recommendations: "Kiba Kori Lage"
   }
 };
-

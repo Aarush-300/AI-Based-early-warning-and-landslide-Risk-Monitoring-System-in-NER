@@ -22,14 +22,14 @@ export default function RoadConnectivity({
 }) {
   const t = TRANSLATIONS[currentLang] || TRANSLATIONS.en;
 
-  const [selectedRoad, setSelectedRoad] = useState(roads[0] || null);
+  const [selectedRoadId, setSelectedRoadId] = useState(roads[0]?.corridor_id || null);
   const [updating, setUpdating] = useState(false);
   const [newStatus, setNewStatus] = useState('PARTIALLY_BLOCKED');
   const [etaHours, setEtaHours] = useState(4.0);
   const [remarks, setRemarks] = useState('');
   const [updateMessage, setUpdateMessage] = useState(null);
 
-  const activeRoad = selectedRoad || roads[0];
+  const activeRoad = roads.find(r => r.corridor_id === selectedRoadId) || roads[0];
 
   const handleUpdateStatus = async (e) => {
     e.preventDefault();
@@ -100,7 +100,7 @@ export default function RoadConnectivity({
               return (
                 <div
                   key={road.corridor_id}
-                  onClick={() => setSelectedRoad(road)}
+                  onClick={() => setSelectedRoadId(road.corridor_id)}
                   className={`p-4 rounded-xl border cursor-pointer transition-all ${
                     isSelected
                       ? 'bg-slate-800 border-amber-500/80 shadow-lg shadow-amber-500/10'

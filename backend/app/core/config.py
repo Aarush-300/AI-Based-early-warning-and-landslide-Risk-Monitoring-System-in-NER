@@ -2,7 +2,7 @@ import os
 from pydantic import BaseModel
 
 class Settings(BaseModel):
-    APP_NAME: str = "BhooDrishti-NER"
+    APP_NAME: str = "TerraintTrace"
     APP_VERSION: str = "1.0.0"
     API_V1_STR: str = "/api/v1"
     DEBUG: bool = True
@@ -35,4 +35,3 @@ class Settings(BaseModel):
 
 settings = Settings()
 os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
-

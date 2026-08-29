@@ -1,8 +1,8 @@
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, HTTPException, Query, status
 from typing import Dict, Any, List, Optional
 from backend.app.models.schemas import LandslideRiskPredictionRequest, LandslideRiskPredictionResponse
 from backend.app.ml.landslide_model import landslide_engine
-from backend.app.data.weather_service import weather_service
+from backend.app.data.weather_service import LiveWeatherUnavailable, weather_service
 from backend.app.data.sensors_service import sensors_service
 from backend.app.data.ner_geodata import HIGHWAY_CORRIDORS
 
@@ -12,10 +12,13 @@ router = APIRouter(prefix="/predict", tags=["AI Predictive Analytics"])
 def predict_landslide_risk(req: LandslideRiskPredictionRequest) -> Dict[str, Any]:
     # If parameters not supplied, enrich with weather service
     if req.rainfall_24h_mm is None or req.rainfall_3d_mm is None:
-        weather = weather_service.get_current_weather(req.lat, req.lng)
+        try:
+            weather = weather_service.get_current_weather(req.lat, req.lng)
+        except LiveWeatherUnavailable as exc:
+            raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=str(exc)) from exc
         rain_24h = weather["rainfall_24h_mm"]
         rain_3d = weather["rainfall_3d_mm"]
-        soil_m = weather["relative_humidity_pct"] * 0.85
+        soil_m = weather["soil_moisture_pct"]
     else:
         rain_24h = req.rainfall_24h_mm
         rain_3d = req.rainfall_3d_mm
@@ -41,11 +44,16 @@ def predict_landslide_risk(req: LandslideRiskPredictionRequest) -> Dict[str, Any
 
 @router.get("/weather-forecast")
 def get_weather_forecast(lat: float = Query(25.5788), lng: float = Query(91.8933), location_name: str = Query("Shillong Plateau")) -> Dict[str, Any]:
-    current_wx = weather_service.get_current_weather(lat, lng, location_name)
-    forecast_72h = weather_service.get_72h_forecast(lat, lng)
+    try:
+        current_wx = weather_service.get_current_weather(lat, lng, location_name)
+        forecast_72h = weather_service.get_72h_forecast(lat, lng)
+    except LiveWeatherUnavailable as exc:
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=str(exc)) from exc
     return {
         "current": current_wx,
-        "forecast_72h": forecast_72h
+        "forecast_72h": forecast_72h,
+        "data_mode": "LIVE",
+        "source": "Open-Meteo",
     }
 
 @router.get("/overview")
@@ -77,4 +85,3 @@ def get_regional_overview() -> Dict[str, Any]:
         "total_stranded_vehicles_ner": total_stranded_vehicles,
         "highest_risk_sector": "Sonapur Tunnel (NH-06) & Teesta Valley (NH-10)"
     }
-

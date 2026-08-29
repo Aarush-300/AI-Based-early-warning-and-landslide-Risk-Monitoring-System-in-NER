@@ -1,0 +1,53 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+dist/
+build/
+*.egg
+.eggs/
+
+# Virtual environments
+venv/
+.venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Environment
+.env
+*.env.local
+
+# Database
+*.db
+*.sqlite3
+
+# Uploads (keep directory, ignore contents)
+uploads/*
+!uploads/.gitkeep
+
+# Models (keep directory, ignore large artifacts)
+models/*.joblib
+models/*.pkl
+models/*.onnx
+
+# Node
+node_modules/
+frontend/node_modules/
+frontend/dist/
+
+# Pytest
+.pytest_cache/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log

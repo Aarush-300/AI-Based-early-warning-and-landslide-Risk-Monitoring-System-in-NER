@@ -7,6 +7,7 @@ import RoadConnectivity from './components/RoadConnectivity';
 import SensorTelemetry from './components/SensorTelemetry';
 import FieldReporting from './components/FieldReporting';
 import AlertBroadcast from './components/AlertBroadcast';
+import Login from './components/Login';
 
 import { 
   fetchOverview, 
@@ -17,12 +18,15 @@ import {
   fetchAlerts, 
   fetchRoads,
   fetchEmergencyResources,
-  fetchHistoricalLandslides
+  fetchHistoricalLandslides,
+  getCurrentUser,
+  logout
 } from './services/api';
 
 export default function App() {
   const currentTab = useSelector((state) => state.navigation.activeModule);
   const [currentLang, setCurrentLang] = useState('en');
+  const [currentUser, setCurrentUser] = useState(getCurrentUser());
 
   // Master Data States
   const [overview, setOverview] = useState(null);
@@ -77,33 +81,60 @@ export default function App() {
   };
 
   useEffect(() => {
+    if (!currentUser) return;
+    
     loadAllData();
 
     // Setup WebSocket connection for live telemetry ticks
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const wsUrl = `${protocol}//${window.location.host}/ws/live`;
     let ws = null;
+    let pingInterval = null;
+    let reconnectTimeout = null;
+    let isComponentMounted = true;
 
-    try {
-      ws = new WebSocket(wsUrl);
-      ws.onmessage = (event) => {
-        try {
-          const payload = JSON.parse(event.data);
-          if (payload.event === 'TELEMETRY_TICK' || payload.event === 'INITIAL_SNAPSHOT') {
-            if (payload.sensors) {
-              setSensors(payload.sensors);
+    const connectWS = () => {
+      try {
+        ws = new WebSocket(wsUrl);
+        
+        ws.onopen = () => {
+          pingInterval = setInterval(() => {
+            if (ws.readyState === WebSocket.OPEN) {
+              ws.send('PING');
             }
+          }, 30000);
+        };
+
+        ws.onmessage = (event) => {
+          try {
+            if (event.data === 'PONG') return;
+            const payload = JSON.parse(event.data);
+            if (payload.event === 'TELEMETRY_TICK' || payload.event === 'INITIAL_SNAPSHOT') {
+              if (payload.sensors) {
+                setSensors(payload.sensors);
+              }
+            }
+          } catch (e) {
+            // ignore parsing error
           }
-        } catch (e) {
-          // ignore parsing error
-        }
-      };
-      ws.onerror = () => {
-        // Fallback polling if WS unavailable
-      };
-    } catch (e) {
-      console.warn('WS fallback to polling');
-    }
+        };
+
+        ws.onclose = () => {
+          if (pingInterval) clearInterval(pingInterval);
+          if (isComponentMounted) {
+            reconnectTimeout = setTimeout(connectWS, 5000);
+          }
+        };
+
+        ws.onerror = () => {
+          // Fallback polling if WS unavailable
+        };
+      } catch (e) {
+        console.warn('WS fallback to polling');
+      }
+    };
+
+    connectWS();
 
     const interval = setInterval(() => {
       fetchSensors().then(setSensors).catch(() => {});
@@ -111,10 +142,17 @@ export default function App() {
     }, 8000);
 
     return () => {
+      isComponentMounted = false;
       if (ws) ws.close();
+      if (pingInterval) clearInterval(pingInterval);
+      if (reconnectTimeout) clearTimeout(reconnectTimeout);
       clearInterval(interval);
     };
-  }, []);
+  }, [currentUser]);
+
+  if (!currentUser) {
+    return <Login onLogin={setCurrentUser} />;
+  }
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-amber-500 selection:text-slate-950">
@@ -124,6 +162,8 @@ export default function App() {
         setCurrentLang={setCurrentLang}
         alerts={alerts}
         overview={overview}
+        onLogout={() => { logout(); setCurrentUser(null); }}
+        user={currentUser}
       />
 
       {/* Main Tab Content */}
@@ -131,7 +171,7 @@ export default function App() {
         {loading ? (
           <div className="flex flex-col items-center justify-center h-[calc(100vh-6rem)] space-y-3">
             <div className="w-12 h-12 border-4 border-amber-500 border-t-transparent rounded-full animate-spin"></div>
-            <p className="text-sm font-bold text-amber-400">Loading BhooDrishti-NER Geospatial Engine...</p>
+            <p className="text-sm font-bold text-amber-400">Loading TerraintTrace Geospatial Engine...</p>
           </div>
         ) : (
           <>

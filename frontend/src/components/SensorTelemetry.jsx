@@ -28,9 +28,9 @@ export default function SensorTelemetry({
   currentLang = 'en' 
 }) {
   const t = TRANSLATIONS[currentLang] || TRANSLATIONS.en;
-  const [selectedSensor, setSelectedSensor] = useState(sensors[0] || null);
+  const [selectedSensorId, setSelectedSensorId] = useState(sensors[0]?.sensor_id || null);
 
-  const activeSensor = selectedSensor || sensors[0];
+  const activeSensor = sensors.find(s => s.sensor_id === selectedSensorId) || sensors[0];
 
   const getStatusBadge = (status) => {
     switch (status) {
@@ -58,7 +58,7 @@ export default function SensorTelemetry({
             Real-Time Slope Instrumentation & Sensor Telemetry
           </h1>
           <p className="text-xs text-slate-400 mt-1">
-            Live readings of Piezometer Pore Pressure (\(u\)), Soil Moisture (\(\theta\)), Biaxial Inclinometer Tilt (\(\theta_{tilt}\)), and Acoustic Emissions.
+            Live readings of Piezometer Pore Pressure (u), Soil Moisture (θ), Biaxial Inclinometer Tilt (θ_tilt), and Acoustic Emissions.
           </p>
         </div>
 
@@ -76,7 +76,7 @@ export default function SensorTelemetry({
           return (
             <div
               key={s.sensor_id}
-              onClick={() => setSelectedSensor(s)}
+              onClick={() => setSelectedSensorId(s.sensor_id)}
               className={`p-4 rounded-xl border cursor-pointer transition-all ${
                 isSelected
                   ? 'bg-slate-800 border-amber-500/80 shadow-lg shadow-amber-500/10'

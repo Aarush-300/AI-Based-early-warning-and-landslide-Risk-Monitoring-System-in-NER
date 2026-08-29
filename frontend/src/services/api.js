@@ -1,6 +1,78 @@
-// API Service & IndexedDB Offline Queue Manager for BhooDrishti-NER
+// API Service & IndexedDB Offline Queue Manager for TerraintTrace
 
 const API_BASE = '/api/v1';
+
+export function getAuthToken() {
+  return localStorage.getItem('bhoodrishti_token');
+}
+
+export function setAuthToken(token) {
+  if (token) {
+    localStorage.setItem('bhoodrishti_token', token);
+  } else {
+    localStorage.removeItem('bhoodrishti_token');
+  }
+}
+
+export function getCurrentUser() {
+  const user = localStorage.getItem('bhoodrishti_user');
+  return user ? JSON.parse(user) : null;
+}
+
+export function setCurrentUser(user) {
+  if (user) {
+    localStorage.setItem('bhoodrishti_user', JSON.stringify(user));
+  } else {
+    localStorage.removeItem('bhoodrishti_user');
+  }
+}
+
+async function authFetch(url, options = {}) {
+  const token = getAuthToken();
+  const headers = {
+    ...options.headers
+  };
+  
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+  
+  const response = await fetch(url, { ...options, headers });
+  if (response.status === 401) {
+    // Handle unauthorized
+    setAuthToken(null);
+    setCurrentUser(null);
+    window.location.hash = '#login'; // Simple client-side routing
+  }
+  return response;
+}
+
+export async function login(username, password) {
+  const formData = new URLSearchParams();
+  formData.append('username', username);
+  formData.append('password', password);
+  
+  const res = await fetch(`${API_BASE}/auth/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: formData.toString()
+  });
+  
+  if (!res.ok) {
+    const error = await res.json();
+    throw new Error(error.detail || 'Login failed');
+  }
+  
+  const data = await res.json();
+  setAuthToken(data.access_token);
+  setCurrentUser(data.user);
+  return data.user;
+}
+
+export function logout() {
+  setAuthToken(null);
+  setCurrentUser(null);
+}
 
 // ---------------- IndexedDB Offline Vault ----------------
 const DB_NAME = 'bhoodrishti_offline_vault';
@@ -74,37 +146,37 @@ export async function fetchStates() {
 }
 
 export async function fetchHighways() {
-  const res = await fetch(`${API_BASE}/gis/highways`);
+  const res = await authFetch(`${API_BASE}/gis/highways`);
   if (!res.ok) throw new Error('Failed to fetch highways');
   return res.json();
 }
 
 export async function fetchSensors() {
-  const res = await fetch(`${API_BASE}/gis/sensors`);
+  const res = await authFetch(`${API_BASE}/gis/sensors`);
   if (!res.ok) throw new Error('Failed to fetch sensors');
   return res.json();
 }
 
 export async function fetchHeatmap() {
-  const res = await fetch(`${API_BASE}/gis/risk-heatmap`);
+  const res = await authFetch(`${API_BASE}/gis/risk-heatmap`);
   if (!res.ok) throw new Error('Failed to fetch heatmap points');
   return res.json();
 }
 
 export async function fetchHistoricalLandslides() {
-  const res = await fetch(`${API_BASE}/gis/historical`);
+  const res = await authFetch(`${API_BASE}/gis/historical`);
   if (!res.ok) throw new Error('Failed to fetch historical landslides');
   return res.json();
 }
 
 export async function fetchEmergencyResources() {
-  const res = await fetch(`${API_BASE}/gis/resources`);
+  const res = await authFetch(`${API_BASE}/gis/resources`);
   if (!res.ok) throw new Error('Failed to fetch emergency resources');
   return res.json();
 }
 
 export async function predictRisk(params) {
-  const res = await fetch(`${API_BASE}/predict/`, {
+  const res = await authFetch(`${API_BASE}/predict/`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(params)
@@ -114,21 +186,21 @@ export async function predictRisk(params) {
 }
 
 export async function fetchWeatherForecast(lat, lng, locationName) {
-  const res = await fetch(`${API_BASE}/predict/weather-forecast?lat=${lat}&lng=${lng}&location_name=${encodeURIComponent(locationName || '')}`);
+  const res = await authFetch(`${API_BASE}/predict/weather-forecast?lat=${lat}&lng=${lng}&location_name=${encodeURIComponent(locationName || '')}`);
   if (!res.ok) throw new Error('Failed to fetch weather forecast');
   return res.json();
 }
 
 export async function fetchReports(filters = {}) {
   const query = new URLSearchParams(filters).toString();
-  const res = await fetch(`${API_BASE}/reports/${query ? `?${query}` : ''}`);
+  const res = await authFetch(`${API_BASE}/reports/${query ? `?${query}` : ''}`);
   if (!res.ok) throw new Error('Failed to fetch field reports');
   return res.json();
 }
 
 export async function submitFieldReport(reportData) {
   try {
-    const res = await fetch(`${API_BASE}/reports/submit`, {
+    const res = await authFetch(`${API_BASE}/reports/submit`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(reportData)
@@ -164,7 +236,7 @@ export async function syncPendingOfflineReports() {
   const pending = await OfflineVault.getAllPendingReports();
   if (pending.length === 0) return { synced_count: 0 };
   
-  const res = await fetch(`${API_BASE}/reports/sync-offline`, {
+  const res = await authFetch(`${API_BASE}/reports/sync-offline`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(pending)
@@ -178,13 +250,13 @@ export async function syncPendingOfflineReports() {
 
 export async function fetchAlerts(filters = {}) {
   const query = new URLSearchParams(filters).toString();
-  const res = await fetch(`${API_BASE}/alerts/${query ? `?${query}` : ''}`);
+  const res = await authFetch(`${API_BASE}/alerts/${query ? `?${query}` : ''}`);
   if (!res.ok) throw new Error('Failed to fetch alerts');
   return res.json();
 }
 
 export async function broadcastAlert(alertData) {
-  const res = await fetch(`${API_BASE}/alerts/broadcast`, {
+  const res = await authFetch(`${API_BASE}/alerts/broadcast`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(alertData)
@@ -194,16 +266,15 @@ export async function broadcastAlert(alertData) {
 }
 
 export async function fetchRoads() {
-  const res = await fetch(`${API_BASE}/roads/`);
+  const res = await authFetch(`${API_BASE}/roads/`);
   if (!res.ok) throw new Error('Failed to fetch roads');
   return res.json();
 }
 
 export async function updateRoadStatus(corridorId, newStatus, etaHours, remarks) {
-  const res = await fetch(`${API_BASE}/roads/${corridorId}/update-status?new_status=${newStatus}&eta_hours=${etaHours || ''}&remarks=${encodeURIComponent(remarks || '')}`, {
+  const res = await authFetch(`${API_BASE}/roads/${corridorId}/update-status?new_status=${newStatus}&eta_hours=${etaHours || ''}&remarks=${encodeURIComponent(remarks || '')}`, {
     method: 'POST'
   });
   if (!res.ok) throw new Error('Failed to update road status');
   return res.json();
 }
-

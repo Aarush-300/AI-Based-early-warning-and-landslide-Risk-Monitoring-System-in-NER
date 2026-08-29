@@ -1,6 +1,7 @@
 import os
 import asyncio
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+import logging
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
@@ -12,7 +13,17 @@ from backend.app.api.routes_predictions import router as predictions_router
 from backend.app.api.routes_reports import router as reports_router
 from backend.app.api.routes_alerts import router as alerts_router
 from backend.app.api.routes_roads import router as roads_router
+from backend.app.auth.routes_auth import router as auth_router
 from backend.app.data.sensors_service import sensors_service
+
+from backend.app.database import init_db, engine
+
+# Configure structured logging
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
+logger = logging.getLogger(__name__)
 
 # Active WebSocket connections list
 connected_clients: list[WebSocket] = []
@@ -37,19 +48,43 @@ async def telemetry_background_ticker():
                             connected_clients.remove(ws)
         except asyncio.CancelledError:
             break
-        except Exception:
-            pass
+        except Exception as e:
+            logger.error(f"Error in telemetry ticker: {e}")
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    # Startup: Initialize DB
+    logger.info("Initializing database...")
+    init_db()
+    
+    # Seed data
+    logger.info("Seeding initial database data...")
+    try:
+        from backend.app import seed_data
+        from backend.app.database import SessionLocal
+        db = SessionLocal()
+        try:
+            seed_data.run_seed(db)
+        finally:
+            db.close()
+    except Exception as e:
+        logger.error(f"Error seeding data: {e}")
+
     # Startup: launch background sensor telemetry ticker
+    logger.info("Starting telemetry background ticker...")
     ticker_task = asyncio.create_task(telemetry_background_ticker())
+    
     yield
+    
     # Shutdown
+    logger.info("Shutting down background tasks...")
     ticker_task.cancel()
+    
+    logger.info("Disposing database connections...")
+    engine.dispose()
 
 app = FastAPI(
-    title=settings.APP_NAME,
+    title="TerraintTrace",
     version=settings.APP_VERSION,
     description="AI-Enabled Real-Time Landslide Early Warning, GIS Monitoring & Crowdsourced Reporting Platform for the North Eastern Region of India.",
     lifespan=lifespan
@@ -59,7 +94,7 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_credentials=True,
+    # Removed allow_credentials=True since allow_origins=["*"] is used
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -74,18 +109,21 @@ app.include_router(predictions_router, prefix=settings.API_V1_STR)
 app.include_router(reports_router, prefix=settings.API_V1_STR)
 app.include_router(alerts_router, prefix=settings.API_V1_STR)
 app.include_router(roads_router, prefix=settings.API_V1_STR)
+app.include_router(auth_router, prefix=settings.API_V1_STR)
 
 @app.get("/api/info")
 def platform_info():
     return {
-        "platform": settings.APP_NAME,
+        "platform": "TerraintTrace",
         "version": settings.APP_VERSION,
         "region": "North Eastern Region (NER), India",
         "supported_states": settings.NER_STATES,
         "supported_languages": [l["name"] for l in settings.LANGUAGES],
         "status": "OPERATIONAL",
         "docs_url": "/docs",
-        "cap_feed_url": f"{settings.API_V1_STR}/alerts/cap-feed.xml"
+        "cap_feed_url": f"{settings.API_V1_STR}/alerts/cap-feed.xml",
+        "auth_enabled": True,
+        "demo_credentials_hint": "admin@bhoodrishti.in / admin123"
     }
 
 @app.get("/api/health")
@@ -113,7 +151,8 @@ async def websocket_live_endpoint(websocket: WebSocket):
     except WebSocketDisconnect:
         if websocket in connected_clients:
             connected_clients.remove(websocket)
-    except Exception:
+    except Exception as e:
+        logger.error(f"WebSocket error: {e}")
         if websocket in connected_clients:
             connected_clients.remove(websocket)
 
@@ -124,10 +163,13 @@ if os.path.exists(frontend_dist):
 
     @app.get("/{full_path:path}")
     async def serve_frontend(full_path: str):
-        if full_path.startswith("api") or full_path.startswith("uploads") or full_path.startswith("ws"):
-            return None
+        # Return 404 for unmatched API routes instead of returning None (which caused issues)
+        if full_path.startswith("api/") or full_path == "api":
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="API route not found")
+        if full_path.startswith("uploads/") or full_path.startswith("ws/"):
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not found")
+            
         file_path = os.path.join(frontend_dist, full_path)
         if os.path.isfile(file_path):
             return FileResponse(file_path)
         return FileResponse(os.path.join(frontend_dist, "index.html"))
-

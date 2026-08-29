@@ -22,7 +22,9 @@ export default function Navbar({
   currentLang, 
   setCurrentLang, 
   alerts = [],
-  overview = null
+  overview = null,
+  onLogout,
+  user
 }) {
   const dispatch = useDispatch();
   const currentTab = useSelector((state) => state.navigation.activeModule);
@@ -122,15 +124,9 @@ export default function Navbar({
             <div>
               <div className="flex items-center gap-2">
                 <span className="text-xl font-black tracking-tight text-white bg-clip-text">
-                  HoverRock<span className="text-blue-400"> AI</span>
-                </span>
-                <span className="hidden md:inline-block px-1.5 py-0.5 text-[9px] uppercase font-bold tracking-widest rounded-full bg-blue-500/10 text-blue-300 border border-blue-500/20">
-                  Antigravity Tech
+                  Terraint<span className="text-blue-400">Trace</span>
                 </span>
               </div>
-              <p className="text-[11px] text-slate-400 font-medium hidden sm:block">
-                Because mountains should stay put.
-              </p>
             </div>
           </div>
 
@@ -210,6 +206,25 @@ export default function Navbar({
                 </button>
               )}
             </div>
+
+            {/* User Profile / Logout */}
+            {user && (
+              <div className="flex items-center gap-3 pl-3 border-l border-slate-700/50">
+                <div className="hidden sm:block text-right">
+                  <div className="text-xs font-bold text-slate-200">{user.username || 'Admin'}</div>
+                  <div className="text-[10px] text-slate-400 uppercase tracking-wider">{user.role || 'Officer'}</div>
+                </div>
+                <button
+                  onClick={onLogout}
+                  className="p-1.5 rounded-lg bg-slate-800/50 hover:bg-red-500/20 text-slate-400 hover:text-red-400 transition-colors border border-transparent hover:border-red-500/30"
+                  title="Logout"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                  </svg>
+                </button>
+              </div>
+            )}
           </div>
         </div>
 

@@ -112,13 +112,21 @@ class RoadBlockageItem(BaseModel):
 
 class AlertCreate(BaseModel):
     title: str
-    severity: str  # ADVISORY (Yellow), WARNING (Orange), EMERGENCY (Red)
-    category: str  # Landslide, Flash Flood, Road Blockage, Mudflow
+    severity: str
+    category: Optional[str] = "Landslide"
+    location_name: Optional[str] = None
     state: str
     district: str
-    affected_corridors: List[str]
-    description: str
-    instructions: List[str]
+    lat: Optional[float] = None
+    lng: Optional[float] = None
+    risk_score: Optional[float] = None
+    reason: Optional[str] = None
+    recommended_action: Optional[str] = None
+    source: Optional[str] = None
+    translations: Optional[Dict[str, Any]] = None
+    affected_corridors: Optional[List[str]] = None
+    description: Optional[str] = None
+    instructions: Optional[List[str]] = None
     expires_at: Optional[datetime] = None
 
 class AlertItem(BaseModel):

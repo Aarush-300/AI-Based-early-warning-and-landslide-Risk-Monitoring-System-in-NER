@@ -8,7 +8,7 @@ def test_platform_info():
     response = client.get("/api/info")
     assert response.status_code == 200
     data = response.json()
-    assert "BhooDrishti-NER" in data["platform"]
+    assert "TerraintTrace" in data["platform"]
     assert len(data["supported_states"]) == 8
 
 def test_health_check():
@@ -81,4 +81,3 @@ def test_roads_and_priority():
     roads = res_roads.json()
     assert len(roads) >= 5
     assert "calculated_priority_score" in roads[0]
-

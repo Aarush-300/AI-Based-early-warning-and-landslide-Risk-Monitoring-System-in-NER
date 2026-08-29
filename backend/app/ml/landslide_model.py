@@ -1,18 +1,39 @@
 import math
+import os
 import numpy as np
 from typing import Dict, Any, List
-from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
+from sklearn.ensemble import RandomForestClassifier
+import joblib
+import logging
+
+logger = logging.getLogger(__name__)
+
+MODELS_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))), "models")
+MODEL_PATH = os.path.join(MODELS_DIR, "landslide_rf_v1.joblib")
 
 class LandslidePredictiveEngine:
     def __init__(self):
         # Calibrated Caine I-D Threshold coefficients for NER
-        # I = alpha * D^(-beta), where I is mm/h, D is duration in hours
         self.caine_alpha_himalaya = 14.82
         self.caine_beta_himalaya = 0.42
         
         self.caine_alpha_indoburma = 18.50
         self.caine_beta_indoburma = 0.48
         
+        self.model_version = "v1.0"
+        self._load_or_train_model()
+
+    def _load_or_train_model(self):
+        """Load pre-trained model from disk, or fall back to runtime training."""
+        if os.path.exists(MODEL_PATH):
+            try:
+                self.model = joblib.load(MODEL_PATH)
+                logger.info(f"Loaded pre-trained model from {MODEL_PATH}")
+                return
+            except Exception as e:
+                logger.warning(f"Failed to load model from disk: {e}. Falling back to runtime training.")
+        
+        logger.info("No pre-trained model found. Training in-memory (rule-based fallback)...")
         self._init_and_train_model()
 
     def _init_and_train_model(self):
@@ -221,23 +242,60 @@ class LandslidePredictiveEngine:
             
         forecast_48h = "RED" if risk_score > 0.65 or rainfall_3d_mm > 150 else ("ORANGE" if risk_score > 0.4 else "YELLOW")
         
+        # Explainable contributing factors
+        contributing_factors = []
+        if rainfall_3d_mm > 150:
+            contributing_factors.append({"factor": "72h Cumulative Rainfall", "level": "VERY HIGH", "value": f"{rainfall_3d_mm:.0f} mm", "weight": 0.30})
+        elif rainfall_3d_mm > 80:
+            contributing_factors.append({"factor": "72h Cumulative Rainfall", "level": "HIGH", "value": f"{rainfall_3d_mm:.0f} mm", "weight": 0.22})
+        if rain_24h_int > 8.0:
+            contributing_factors.append({"factor": "24h Rainfall Intensity", "level": "VERY HIGH", "value": f"{rain_24h_int:.1f} mm/h", "weight": 0.18})
+        if slope_deg > 40:
+            contributing_factors.append({"factor": "Slope Angle", "level": "HIGH", "value": f"{slope_deg:.1f}°", "weight": 0.25})
+        elif slope_deg > 25:
+            contributing_factors.append({"factor": "Slope Angle", "level": "MODERATE", "value": f"{slope_deg:.1f}°", "weight": 0.15})
+        if soil_moisture_pct > 85:
+            contributing_factors.append({"factor": "Soil Saturation", "level": "VERY HIGH", "value": f"{soil_moisture_pct:.0f}%", "weight": 0.15})
+        elif soil_moisture_pct > 70:
+            contributing_factors.append({"factor": "Soil Saturation", "level": "HIGH", "value": f"{soil_moisture_pct:.0f}%", "weight": 0.12})
+        if inclinometer_tilt_rate_mm_day > 4.0:
+            contributing_factors.append({"factor": "Ground Displacement Rate", "level": "HIGH", "value": f"{inclinometer_tilt_rate_mm_day:.1f} mm/day", "weight": 0.15})
+        if fs < 1.2:
+            contributing_factors.append({"factor": "Factor of Safety", "level": "CRITICAL" if fs < 1.0 else "HIGH", "value": f"{fs:.2f}", "weight": 0.20})
+        if not contributing_factors:
+            contributing_factors.append({"factor": "All Parameters", "level": "NORMAL", "value": "Within safe thresholds", "weight": 0.0})
+        
+        # Sort by weight descending
+        contributing_factors.sort(key=lambda x: x["weight"], reverse=True)
+        
+        # Confidence based on RF probability and FoS agreement
+        confidence = round(float(probabilities[pred_class] * 100), 1)
+        
         return {
             "risk_score": risk_score,
             "risk_level": risk_level,
+            "confidence_score": confidence,
             "factor_of_safety": fs,
             "caine_threshold_ratio": caine_eval["caine_threshold_ratio"],
             "probability_percentage": round(float(probabilities[pred_class] * 100), 1),
             "dominant_trigger": dominant_trigger,
+            "contributing_factors": contributing_factors,
             "recommendations": recs,
             "forecast_48h_level": forecast_48h,
+            "model_version": self.model_version,
             "geotechnical_summary": {
                 "slope_deg": slope_deg,
+                "elevation_m": elevation_m,
                 "lithology": lithology_type,
                 "inclinometer_tilt_rate_mm_day": inclinometer_tilt_rate_mm_day,
                 "soil_moisture_pct": soil_moisture_pct,
+                "rainfall_3d_mm": rainfall_3d_mm,
+                "rainfall_24h_mm": rainfall_24h_mm,
                 "caine_analysis": caine_eval
-            }
+            },
+            "disclaimer": "Decision-support indicator only. Does not replace official disaster-management assessment."
         }
 
 landslide_engine = LandslidePredictiveEngine()
+
 

@@ -78,9 +78,15 @@ export default function RiskAnalytics({ currentLang = 'en' }) {
   };
 
   useEffect(() => {
-    runSimulation();
     loadForecast();
   }, [selectedStation]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      runSimulation();
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [slopeDeg, rain3d, rain24h, soilMoisture, tiltRate, lithology, selectedStation]);
 
   // Caine I-D theoretical curve points
   const caineCurveData = [
@@ -289,7 +295,7 @@ export default function RiskAnalytics({ currentLang = 'en' }) {
                   min="10"
                   max="65"
                   value={slopeDeg}
-                  onChange={(e) => { setSlopeDeg(e.target.value); runSimulation(); }}
+                  onChange={(e) => { setSlopeDeg(e.target.value); }}
                   className="w-full accent-amber-500"
                 />
               </div>
@@ -305,7 +311,7 @@ export default function RiskAnalytics({ currentLang = 'en' }) {
                   min="0"
                   max="450"
                   value={rain3d}
-                  onChange={(e) => { setRain3d(e.target.value); runSimulation(); }}
+                  onChange={(e) => { setRain3d(e.target.value); }}
                   className="w-full accent-cyan-500"
                 />
               </div>
@@ -321,7 +327,7 @@ export default function RiskAnalytics({ currentLang = 'en' }) {
                   min="0"
                   max="200"
                   value={rain24h}
-                  onChange={(e) => { setRain24h(e.target.value); runSimulation(); }}
+                  onChange={(e) => { setRain24h(e.target.value); }}
                   className="w-full accent-blue-500"
                 />
               </div>
@@ -337,7 +343,7 @@ export default function RiskAnalytics({ currentLang = 'en' }) {
                   min="20"
                   max="100"
                   value={soilMoisture}
-                  onChange={(e) => { setSoilMoisture(e.target.value); runSimulation(); }}
+                  onChange={(e) => { setSoilMoisture(e.target.value); }}
                   className="w-full accent-orange-500"
                 />
               </div>
@@ -354,7 +360,7 @@ export default function RiskAnalytics({ currentLang = 'en' }) {
                   max="20"
                   step="0.5"
                   value={tiltRate}
-                  onChange={(e) => { setTiltRate(e.target.value); runSimulation(); }}
+                  onChange={(e) => { setTiltRate(e.target.value); }}
                   className="w-full accent-rose-500"
                 />
               </div>
@@ -364,7 +370,7 @@ export default function RiskAnalytics({ currentLang = 'en' }) {
                 <div className="text-slate-300 font-semibold mb-1">Lithology / Rock Type:</div>
                 <select
                   value={lithology}
-                  onChange={(e) => { setLithology(e.target.value); runSimulation(); }}
+                  onChange={(e) => { setLithology(e.target.value); }}
                   className="w-full bg-slate-950 border border-slate-700 text-white rounded-lg p-2 font-medium"
                 >
                   <option value="Shale & Siltstone (Fragile)">Shale & Siltstone (Fragile Disang Group)</option>

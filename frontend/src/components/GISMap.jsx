@@ -25,7 +25,7 @@ import {
   Info,
   Maximize2
 } from 'lucide-react';
-import { predictRisk } from '../services/api';
+import { predictRisk, fetchHeatmap, fetchHistoricalLandslides } from '../services/api';
 import { TRANSLATIONS } from '../services/i18n';
 
 // Fix standard Leaflet icon paths
@@ -137,6 +137,15 @@ export default function GISMap({
   const [showResources, setShowResources] = useState(true);
   const [showHistorical, setShowHistorical] = useState(true);
 
+  // Dynamic API Data
+  const [heatmapData, setHeatmapData] = useState([]);
+  const [historicalData, setHistoricalData] = useState([]);
+
+  useEffect(() => {
+    fetchHeatmap().then(setHeatmapData).catch(console.error);
+    fetchHistoricalLandslides().then(setHistoricalData).catch(console.error);
+  }, []);
+
   // Probe state
   const [probeLocation, setProbeLocation] = useState(null);
   const [probeLoading, setProbeLoading] = useState(false);
@@ -149,13 +158,7 @@ export default function GISMap({
     try {
       const res = await predictRisk({
         lat: latlng.lat,
-        lng: latlng.lng,
-        slope_deg: 36.0,
-        elevation_m: 1600.0,
-        rainfall_3d_mm: 140.0,
-        rainfall_24h_mm: 55.0,
-        soil_moisture_pct: 82.0,
-        inclinometer_tilt_rate_mm_day: 4.2
+        lng: latlng.lng
       });
       setProbeResult(res);
     } catch (err) {
@@ -193,10 +196,10 @@ export default function GISMap({
           <MapViewController center={mapCenter} zoom={zoomLevel} />
           <MapInspector onLocationClick={handleMapProbe} />
 
-          {/* CartoDB Dark Matter Base Tiles */}
+          {/* OpenStreetMap base tiles — public tiles with no API key required. */}
           <TileLayer
-            attribution='&copy; <a href="https://carto.com/">CARTO</a> &copy; OpenStreetMap contributors'
-            url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
 
           {/* 1. Landslide Risk Heatmap & Hazard Buffers */}
@@ -501,4 +504,3 @@ export default function GISMap({
     </div>
   );
 }
-
