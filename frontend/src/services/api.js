@@ -69,6 +69,24 @@ export async function login(username, password) {
   return data.user;
 }
 
+export async function registerAccount(account) {
+  const res = await fetch(`${API_BASE}/auth/register`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(account)
+  });
+
+  if (!res.ok) {
+    const error = await res.json().catch(() => ({}));
+    throw new Error(error.detail || 'Unable to create your account');
+  }
+
+  const data = await res.json();
+  setAuthToken(data.access_token);
+  setCurrentUser(data.user);
+  return data.user;
+}
+
 export function logout() {
   setAuthToken(null);
   setCurrentUser(null);
