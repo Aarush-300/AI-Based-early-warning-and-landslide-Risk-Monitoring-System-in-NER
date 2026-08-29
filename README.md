@@ -1,122 +1,71 @@
-# BhooDrishti-NER (भू-दृष्टि)
-### AI-Powered Real-Time Landslide Early Warning, GIS Monitoring & Crowdsourced Reporting Platform for India's North Eastern Region
+# TerraintTrace
 
----
+TerraintTrace is an AI-assisted geospatial decision-support platform for landslide-risk monitoring, live weather intelligence, GIS visualization, and field reporting across India's North Eastern Region.
 
-## 🏔️ Background & Problem Statement
-The **North Eastern Region (NER)** of India—spanning **Sikkim, Assam, Meghalaya, Arunachal Pradesh, Nagaland, Manipur, Mizoram, and Tripura**—is one of the most landslide-prone zones in the world due to extreme monsoon rainfall, young folded Himalayan & Indo-Burman geology, fragile Disang/Daling schists, and unplanned hill cutting. 
+## Data sources and current data mode
 
-**BhooDrishti-NER** bridges this gap with an AI-driven, real-time early warning and geospatial decision-support platform designed for State Disaster Management Authorities (SDMAs), Border Roads Organisation (BRO), National Highways Authority of India (NHAI), district administrations, and local hill communities.
+TerraintTrace explicitly separates live sources from demonstration layers.
 
----
+| Layer | Source | Status |
+| --- | --- | --- |
+| Current weather, rainfall, wind, cloud cover, and soil moisture | [Open-Meteo Weather API](https://open-meteo.com/en/docs) | Live; requested by coordinate and cached for 5 minutes |
+| Basemap | [OpenStreetMap](https://www.openstreetmap.org/copyright) | Live map tiles; no API key required |
+| Sensor telemetry | Local demo sensor stations and simulation | Not live; connect `SENSOR_GATEWAY_URL` to use deployed hardware |
+| Roads, shelters, alerts, risk zones, and historical landslides | Seeded local SQLite data and curated demo GIS records | Not a live official feed |
+| Field reports | Application users | Live after submission, stored in the application database |
 
-## ⚡ Key Capabilities & Architecture
+Live-weather endpoints:
 
-```
-+-----------------------------------------------------------------------------------------------+
-|                                      DATA INGESTION LAYER                                     |
-|  - IMD Weather Radar & Forecast Feeds (Dynamic Intensity & Antecedent Precipitation API-30)   |
-|  - In-Situ Geotechnical IoT Telemetry (Pore Pressure, Soil Saturation, Inclinometer Tilt)     |
-|  - NASA/ISRO Satellite DEM Slope Gradients & Geological Thrust Line Buffers                   |
-|  - GSI Historical Landslide Inventory Catalogs                                                |
-+-----------------------------------------------+-----------------------------------------------+
-                                                |
-                                                v
-+-----------------------------------------------------------------------------------------------+
-|                                     AI / ML ANALYTICS CORE                                    |
-|  1. Hydro-Meteorological Failure Model: Calibrated Caine I-D Thresholds (Eastern Himalayas)   |
-|  2. Geotechnical Risk ML: Random Forest & Gradient Boosting Classifier with Factor of Safety  |
-|  3. Edge Computer Vision Engine: Tension Crack & Debris Volume Classification from Photos     |
-|  4. Emergency Priority Engine: Vulnerability Index ($V_i$) & Detour Optimization             |
-+-----------------------------------------------+-----------------------------------------------+
-                                                |
-                                                v
-+-----------------------------------------------------------------------------------------------+
-|                                      APPLICATION SERVICES                                     |
-|  - FastAPI Backend (REST & WebSocket /ws/live for dynamic 4s sensor telemetry streaming)      |
-|  - Multilingual Alert Engine (English, Assamese, Bengali, Hindi, Khasi, Mizo, Manipuri, etc.)  |
-|  - OASIS Common Alerting Protocol (CAP v1.2) XML compliant broadcasting                       |
-|  - Offline-First PWA Vault (IndexedDB local queue for remote mountain area blackout sync)     |
-+-----------------------------------------------+-----------------------------------------------+
-                                                |
-                                                v
-+-----------------------------------------------------------------------------------------------+
-|                                  INTERACTIVE GIS COMMAND CENTER                               |
-|  - Leaflet Dynamic 2D GIS Map (Susceptibility Heatmap, Corridors, Sensors, Shelters, Reports) |
-|  - Click-anywhere AI Slope Risk Probe: Instant geotechnical evaluation at any coordinate       |
-|  - 72-Hour Predictive Hydro-Meteorological Forecast Graph & What-If Parameter Simulator        |
-|  - Strategic Highway Matrix (NH-10, NH-29, NH-06, NH-102, NH-13, NH-54, NH-27) & Detour Plan  |
-|  - Web Speech API Native Audio Alert Announcer in local languages                             |
-+-----------------------------------------------------------------------------------------------+
+- `GET /api/v1/predict/weather-forecast?lat=<latitude>&lng=<longitude>`
+- `POST /api/v1/predict/` without rainfall fields; the service enriches the prediction with live weather data.
+
+If the live provider is unavailable, these endpoints return HTTP `503` instead of fabricating weather values.
+
+## Capabilities
+
+- Live coordinate-based weather and 72-hour forecast data.
+- Leaflet GIS map with highway, report, resource, sensor, and historical-landslide layers.
+- AI landslide-risk prediction using rainfall, soil moisture, slope, elevation, and geotechnical assumptions.
+- Field reporting with offline queueing and later synchronization.
+- Multilingual emergency alerts and CAP XML feed.
+
+## Quick start
+
+### 1. Install dependencies
+
+```bash
+pip install -r requirements.txt
+cd frontend
+npm install
+npm run build
+cd ..
 ```
 
----
+### 2. Launch the platform
 
-## 🚀 Quick Start Guide
-
-### 1. Launch Platform
 ```bash
 python start_platform.py
 ```
-This starts the backend and automatically opens the interactive GIS dashboard at:
-👉 **`http://127.0.0.1:8000`**
 
-### 2. API Documentation & CAP Feeds
-- **Swagger Interactive API Docs**: `http://127.0.0.1:8000/docs`
-- **OASIS CAP 1.2 XML Feed**: `http://127.0.0.1:8000/api/v1/alerts/cap-feed.xml`
+Open the dashboard at `http://127.0.0.1:8000`.
 
-### 3. Run Automated Tests
+### 3. API documentation
+
+- Swagger UI: `http://127.0.0.1:8000/docs`
+- CAP feed: `http://127.0.0.1:8000/api/v1/alerts/cap-feed.xml`
+
+### 4. Run tests
+
 ```bash
 python -m pytest backend/tests/test_backend.py -v
 ```
 
----
+## Configuration
 
-## 🧪 AI & Geotechnical Models Implemented
+Copy `.env.example` to `.env` and set production values for the database and `SECRET_KEY`.
 
-### 1. Hydro-Meteorological Rainfall Threshold ($I-D$ Curve)
-Uses empirical Caine equations calibrated for North East India:
-$$I = \alpha \cdot D^{-\beta}$$
-- **Eastern Himalayas (Sikkim / Arunachal / North Assam)**: $\alpha = 14.82, \beta = 0.42$
-- **Indo-Burman Range (Nagaland / Manipur / Mizoram / Meghalaya)**: $\alpha = 18.50, \beta = 0.48$
+Open-Meteo does not require an API key for this integration. To replace the simulated sensor data with a real deployment, configure a compatible sensor gateway through `SENSOR_GATEWAY_URL` and map its readings to the telemetry schema.
 
-### 2. Infinite Slope Factor of Safety ($F_s$)
-Computes limit equilibrium slope stability:
-$$F_s = \frac{c' + (\gamma_{sat} \cdot z - \gamma_w \cdot h_w) \cos^2 \alpha \tan \phi'}{\gamma_{sat} \cdot z \cdot \sin \alpha \cos \alpha}$$
-Where:
-- $\alpha$: Slope angle ($10^\circ - 65^\circ$)
-- $c'$: Effective soil cohesion ($18.0 \text{ kPa}$)
-- $\phi'$: Internal friction angle ($28.0^\circ$)
-- $h_w / z$: Normalized saturation depth based on in-situ moisture sensors.
+## Important operational note
 
-### 3. Computer Vision Field Inspection
-Analyzes user-uploaded photos for:
-- Tension crack aperture width estimation ($\text{mm}$)
-- Surface edge gradient density & scarp identification
-- Colluvium/debris volume classification ($> 500\text{ m}^3$ vs $< 50\text{ m}^3$)
-- Auto-generates prioritized mitigation actions.
-
-### 4. Emergency Response Prioritization Index ($V_i$)
-$$V_i = w_{sev} \cdot \text{Severity} + w_{traf} \cdot \text{StrandedTraffic} + w_{pop} \cdot \text{IsolatedSettlement} + w_{infra} \cdot \text{LifelineCutoff}$$
-Calculates priority rankings ($0 - 100$) to dispatch heavy machinery (excavators, rock breakers, SDRF teams) to critical highway choke points.
-
----
-
-## 🌐 Supported Multilingual Alert Languages
-- **English** (`en`)
-- **Assamese** (`as` - অসমীয়া)
-- **Bengali** (`bn` - বাংলা)
-- **Hindi** (`hi` - हिन्दी)
-- **Khasi** (`kha` - Ka Ktien Khasi)
-- **Mizo** (`lus` - Mizo ṭawng)
-- **Manipuri** (`mni` - মৈতৈলোন্)
-- **Nagamese** (`nag` - Nagamese)
-
----
-
-## 📴 Offline Resilience (PWA Architecture)
-In remote mountain valleys where 4G/cellular networks drop during monsoon landslides:
-1. Field officers and citizens can still log photo reports with GPS coordinates.
-2. Reports are saved in **IndexedDB** (`bhoodrishti_offline_vault`).
-3. When connectivity is restored, the application automatically synchronizes all pending records to the central disaster response database.
-
+TerraintTrace is a decision-support application. Its current live input is meteorological data; the local sensor telemetry and operational GIS layers are demonstration data unless an approved upstream feed is connected. Do not use the demo layers as the sole basis for emergency or safety-critical decisions.
