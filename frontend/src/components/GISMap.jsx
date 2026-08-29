@@ -7,7 +7,8 @@ import {
   Polyline, 
   Circle, 
   useMap, 
-  useMapEvents 
+  useMapEvents,
+  ZoomControl
 } from 'react-leaflet';
 import L from 'leaflet';
 import { 
@@ -95,6 +96,9 @@ function MapInspector({ onLocationClick }) {
   return null;
 }
 
+import { useSelector, useDispatch } from 'react-redux';
+import SubNav from './SubNav';
+
 export default function GISMap({ 
   states = [], 
   highways = [], 
@@ -105,10 +109,25 @@ export default function GISMap({
   currentLang = 'en'
 }) {
   const t = TRANSLATIONS[currentLang] || TRANSLATIONS.en;
+  const dispatch = useDispatch();
+  const activeRegion = useSelector((state) => state.navigation.activeRegion);
 
   const [mapCenter, setMapCenter] = useState([26.2006, 92.9376]); // Center of North East India
   const [zoomLevel, setZoomLevel] = useState(7);
-  const [selectedState, setSelectedState] = useState(null);
+
+  // Sync map center with Redux activeRegion
+  useEffect(() => {
+    if (!activeRegion) {
+      setMapCenter([26.2006, 92.9376]);
+      setZoomLevel(7);
+    } else {
+      const st = states.find((s) => s.name === activeRegion);
+      if (st) {
+        setMapCenter(st.center);
+        setZoomLevel(9);
+      }
+    }
+  }, [activeRegion, states]);
 
   // Layer Toggles
   const [showHeatmap, setShowHeatmap] = useState(true);
@@ -122,12 +141,6 @@ export default function GISMap({
   const [probeLocation, setProbeLocation] = useState(null);
   const [probeLoading, setProbeLoading] = useState(false);
   const [probeResult, setProbeResult] = useState(null);
-
-  const handleStateClick = (state) => {
-    setSelectedState(state.name);
-    setMapCenter(state.center);
-    setZoomLevel(9);
-  };
 
   const handleMapProbe = async (latlng) => {
     setProbeLocation(latlng);
@@ -163,40 +176,9 @@ export default function GISMap({
 
   return (
     <div className="relative w-full h-[calc(100vh-6rem)] bg-slate-950 flex flex-col overflow-hidden">
-      {/* Top Floating State Selector Bar */}
-      <div className="absolute top-3 left-3 right-3 z-[1000] flex flex-wrap items-center gap-1.5 p-2 bg-slate-900/90 backdrop-blur-md rounded-xl border border-slate-800 shadow-2xl">
-        <span className="text-[11px] font-bold text-amber-400 uppercase tracking-wider px-2 flex items-center gap-1">
-          <Compass className="h-3.5 w-3.5" />
-          {t.quick_states}:
-        </span>
-        <button
-          onClick={() => {
-            setSelectedState(null);
-            setMapCenter([26.2006, 92.9376]);
-            setZoomLevel(7);
-          }}
-          className={`px-2.5 py-1 text-xs font-semibold rounded-lg transition-all ${
-            !selectedState 
-              ? 'bg-amber-500 text-slate-950 shadow-md font-bold' 
-              : 'text-slate-300 hover:bg-slate-800'
-          }`}
-        >
-          All NER (Overview)
-        </button>
-        {states.map((st) => (
-          <button
-            key={st.name}
-            onClick={() => handleStateClick(st)}
-            className={`px-2.5 py-1 text-xs font-semibold rounded-lg transition-all ${
-              selectedState === st.name 
-                ? 'bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-md font-bold' 
-                : 'text-slate-300 hover:bg-slate-800'
-            }`}
-          >
-            {st.name}
-          </button>
-        ))}
-      </div>
+      
+      {/* Floating Glassmorphic SubNav for Regions */}
+      <SubNav states={states} />
 
       {/* Main Leaflet Map View */}
       <div className="flex-1 w-full h-full relative">
@@ -204,8 +186,10 @@ export default function GISMap({
           center={mapCenter}
           zoom={zoomLevel}
           scrollWheelZoom={true}
+          zoomControl={false}
           className="w-full h-full"
         >
+          <ZoomControl position="bottomright" />
           <MapViewController center={mapCenter} zoom={zoomLevel} />
           <MapInspector onLocationClick={handleMapProbe} />
 

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useSelector } from 'react-redux';
 import Navbar from './components/Navbar';
 import GISMap from './components/GISMap';
 import RiskAnalytics from './components/RiskAnalytics';
@@ -20,7 +21,7 @@ import {
 } from './services/api';
 
 export default function App() {
-  const [currentTab, setCurrentTab] = useState('map');
+  const currentTab = useSelector((state) => state.navigation.activeModule);
   const [currentLang, setCurrentLang] = useState('en');
 
   // Master Data States
@@ -60,14 +61,14 @@ export default function App() {
       ]);
 
       if (ovData) setOverview(ovData);
-      setStates(stData);
-      setHighways(hwData);
-      setSensors(snData);
-      setReports(rpData);
-      setAlerts(alData);
-      setRoads(rdData);
-      setResources(rsData);
-      setHistorical(hsData);
+      setStates(stData || []);
+      setHighways(hwData || []);
+      setSensors(snData || []);
+      setReports(rpData || []);
+      setAlerts(alData || []);
+      setRoads(rdData || []);
+      setResources(rsData || []);
+      setHistorical(hsData || []);
     } catch (err) {
       console.error('Failed loading initial master dataset:', err);
     } finally {
@@ -119,8 +120,6 @@ export default function App() {
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-amber-500 selection:text-slate-950">
       {/* Top Universal Navbar */}
       <Navbar
-        currentTab={currentTab}
-        setCurrentTab={setCurrentTab}
         currentLang={currentLang}
         setCurrentLang={setCurrentLang}
         alerts={alerts}

@@ -14,7 +14,7 @@ def open_browser():
 
 if __name__ == "__main__":
     print("=" * 70)
-    print("  BhooDrishti-NER (भू-दृष्टि): Landslide Early Warning & GIS Platform")
+    print("  BhooDrishti-NER: Landslide Early Warning & GIS Platform")
     print("  Serving 8 North Eastern States: Sikkim, Assam, Meghalaya,")
     print("  Arunachal Pradesh, Nagaland, Manipur, Mizoram, Tripura")
     print("=" * 70)

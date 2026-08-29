@@ -1,34 +1,35 @@
 import React, { useState, useEffect } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
+import { setActiveModule } from '../store/navigationSlice';
 import { 
-  ShieldAlert, 
   Wifi, 
   WifiOff, 
   RefreshCw, 
   Globe, 
-  Volume2, 
-  VolumeX, 
   Layers, 
   Activity, 
   Radio, 
   Truck, 
   FileText, 
-  Bell
+  Bell,
+  Mountain,
+  ArrowUpCircle
 } from 'lucide-react';
 import { LANGUAGES, TRANSLATIONS } from '../services/i18n';
 import { OfflineVault, syncPendingOfflineReports } from '../services/api';
 
 export default function Navbar({ 
-  currentTab, 
-  setCurrentTab, 
   currentLang, 
   setCurrentLang, 
   alerts = [],
   overview = null
 }) {
+  const dispatch = useDispatch();
+  const currentTab = useSelector((state) => state.navigation.activeModule);
+
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [pendingCount, setPendingCount] = useState(0);
   const [syncing, setSyncing] = useState(false);
-  const [soundEnabled, setSoundEnabled] = useState(true);
 
   const t = TRANSLATIONS[currentLang] || TRANSLATIONS.en;
 
@@ -85,7 +86,7 @@ export default function Navbar({
   const activeRedAlert = alerts.find(a => a.severity === 'EMERGENCY') || alerts[0];
 
   return (
-    <header className="sticky top-0 z-50 bg-slate-900/95 backdrop-blur-md border-b border-slate-800 shadow-xl">
+    <header className="sticky top-0 z-50 bg-slate-900/80 backdrop-blur-xl border-b border-slate-800 shadow-xl transition-all duration-300">
       {/* Top emergency broadcast ticker */}
       {activeRedAlert && (
         <div className="bg-gradient-to-r from-red-700 via-rose-600 to-red-800 text-white text-xs px-4 py-1.5 flex items-center justify-between font-semibold shadow-inner">
@@ -102,7 +103,7 @@ export default function Navbar({
             </span>
           </div>
           <button 
-            onClick={() => setCurrentTab('alerts')}
+            onClick={() => dispatch(setActiveModule('alerts'))}
             className="ml-4 underline hover:text-red-100 text-[11px] whitespace-nowrap"
           >
             View CAP Directive &rarr;
@@ -114,44 +115,44 @@ export default function Navbar({
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo & Branding */}
-          <div className="flex items-center gap-3 cursor-pointer" onClick={() => setCurrentTab('map')}>
-            <div className="h-11 w-11 rounded-xl bg-gradient-to-br from-amber-500 via-orange-600 to-red-600 flex items-center justify-center shadow-lg shadow-orange-500/20 border border-orange-400/30">
-              <ShieldAlert className="h-6 w-6 text-white" />
+          <div className="flex items-center gap-3 cursor-pointer group" onClick={() => dispatch(setActiveModule('map'))}>
+            <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-indigo-500 to-blue-600 flex items-center justify-center shadow-lg shadow-blue-500/30 border border-blue-400/20 group-hover:scale-105 transition-transform duration-300">
+              <Mountain className="h-5 w-5 text-white" />
             </div>
             <div>
               <div className="flex items-center gap-2">
                 <span className="text-xl font-black tracking-tight text-white bg-clip-text">
-                  BhooDrishti<span className="text-amber-400">-NER</span>
+                  HoverRock<span className="text-blue-400"> AI</span>
                 </span>
-                <span className="hidden md:inline-block px-1.5 py-0.5 text-[10px] uppercase font-bold tracking-wider rounded bg-amber-500/10 text-amber-300 border border-amber-500/20">
-                  भू-दृष्टि AI
+                <span className="hidden md:inline-block px-1.5 py-0.5 text-[9px] uppercase font-bold tracking-widest rounded-full bg-blue-500/10 text-blue-300 border border-blue-500/20">
+                  Antigravity Tech
                 </span>
               </div>
               <p className="text-[11px] text-slate-400 font-medium hidden sm:block">
-                {t.app_subtitle}
+                Because mountains should stay put.
               </p>
             </div>
           </div>
 
           {/* Navigation Tabs */}
-          <nav className="hidden lg:flex items-center gap-1 bg-slate-950/60 p-1.5 rounded-xl border border-slate-800">
+          <nav className="hidden lg:flex items-center gap-2">
             {navItems.map((item) => {
               const Icon = item.icon;
               const isActive = currentTab === item.id;
               return (
                 <button
                   key={item.id}
-                  onClick={() => setCurrentTab(item.id)}
-                  className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 relative ${
+                  onClick={() => dispatch(setActiveModule(item.id))}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[13px] transition-all duration-300 relative font-semibold ${
                     isActive
-                      ? 'bg-gradient-to-r from-amber-500 to-orange-600 text-white shadow-md shadow-orange-500/20 font-bold'
-                      : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+                      ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-[0_0_15px_rgba(79,70,229,0.5)] border border-blue-400/30'
+                      : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 hover:shadow-lg'
                   }`}
                 >
                   <Icon className={`h-4 w-4 ${isActive ? 'text-white' : 'text-slate-400'}`} />
                   <span>{item.label}</span>
                   {item.badge > 0 && (
-                    <span className="ml-1 px-1.5 py-0.2 bg-red-500 text-white text-[10px] rounded-full font-bold">
+                    <span className="ml-1 px-1.5 py-0.5 bg-red-500 text-white text-[10px] rounded-full font-bold shadow-sm">
                       {item.badge}
                     </span>
                   )}
@@ -161,10 +162,10 @@ export default function Navbar({
           </nav>
 
           {/* Right utility actions */}
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-3">
             {/* Language Selector */}
-            <div className="relative flex items-center bg-slate-800/80 border border-slate-700 rounded-lg px-2.5 py-1 text-xs text-slate-200">
-              <Globe className="h-3.5 w-3.5 text-amber-400 mr-1.5" />
+            <div className="relative flex items-center bg-slate-800/50 border border-slate-700/80 rounded-full px-3 py-1.5 text-xs text-slate-200 hover:bg-slate-800 transition-colors">
+              <Globe className="h-3.5 w-3.5 text-blue-400 mr-2" />
               <select
                 value={currentLang}
                 onChange={(e) => setCurrentLang(e.target.value)}
@@ -180,14 +181,17 @@ export default function Navbar({
             </div>
 
             {/* Offline/Online Sync Badge */}
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-2">
               {isOnline ? (
-                <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-950/60 border border-emerald-800/50 text-emerald-400 text-xs font-medium">
-                  <Wifi className="h-3.5 w-3.5" />
-                  <span className="hidden sm:inline">{t.online_synced}</span>
+                <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-800/50 border border-slate-700/50 text-emerald-400 text-xs font-medium shadow-sm">
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                  </span>
+                  <span className="hidden sm:inline">Cloud Synced</span>
                 </div>
               ) : (
-                <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-rose-950/70 border border-rose-800/60 text-rose-300 text-xs font-medium animate-pulse">
+                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-rose-950/40 border border-rose-800/30 text-rose-400 text-xs font-medium animate-pulse">
                   <WifiOff className="h-3.5 w-3.5" />
                   <span>{t.offline_mode}</span>
                 </div>
@@ -198,8 +202,8 @@ export default function Navbar({
                 <button
                   onClick={handleSync}
                   disabled={!isOnline || syncing}
-                  className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-500 hover:bg-amber-600 disabled:opacity-50 text-slate-950 text-xs font-bold transition-all shadow-md"
-                  title="Upload reports recorded while offline in remote mountain areas"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-indigo-500 hover:bg-indigo-600 disabled:opacity-50 text-white text-xs font-bold transition-all shadow-[0_0_10px_rgba(99,102,241,0.4)]"
+                  title="Upload reports recorded while offline"
                 >
                   <RefreshCw className={`h-3 w-3 ${syncing ? 'animate-spin' : ''}`} />
                   <span>Sync ({pendingCount})</span>
@@ -210,18 +214,18 @@ export default function Navbar({
         </div>
 
         {/* Mobile Sub-Navigation */}
-        <div className="lg:hidden flex items-center justify-between overflow-x-auto py-2 border-t border-slate-800/80 gap-1 text-xs">
+        <div className="lg:hidden flex items-center justify-between overflow-x-auto py-2 border-t border-slate-800/50 gap-2 text-xs scrollbar-hide">
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = currentTab === item.id;
             return (
               <button
                 key={item.id}
-                onClick={() => setCurrentTab(item.id)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg whitespace-nowrap font-medium ${
+                onClick={() => dispatch(setActiveModule(item.id))}
+                className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl whitespace-nowrap font-medium transition-all ${
                   isActive
-                    ? 'bg-orange-500 text-white font-bold'
-                    : 'text-slate-400 hover:text-slate-200'
+                    ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/20'
+                    : 'text-slate-400 hover:text-slate-200 bg-slate-800/30'
                 }`}
               >
                 <Icon className="h-3.5 w-3.5" />
@@ -234,4 +238,3 @@ export default function Navbar({
     </header>
   );
 }
-
