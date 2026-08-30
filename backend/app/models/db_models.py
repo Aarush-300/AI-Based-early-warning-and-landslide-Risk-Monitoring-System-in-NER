@@ -1,5 +1,5 @@
 """
-BhooDrishti-NER SQLAlchemy ORM Models
+TerrainTrace-NER SQLAlchemy ORM Models
 All persistent entities for the landslide early warning platform.
 """
 import datetime

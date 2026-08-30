@@ -1,5 +1,5 @@
 """
-BhooDrishti-NER Database Seed Script
+TerrainTrace-NER Database Seed Script
 Populates the database with realistic NER demo data.
 Idempotent — safe to run multiple times.
 """
@@ -28,7 +28,7 @@ def _seed_users(db):
         return
     users = [
         User(
-            username="admin", email="admin@bhoodrishti.gov.in",
+            username="admin", email="admin@terraintrace.gov.in",
             hashed_password=hash_password("admin123"),
             full_name="Platform Admin", role="admin"
         ),

@@ -1,47 +1,82 @@
 {
-  "model_version": "v1.0",
-  "algorithm": "RandomForestClassifier",
-  "n_estimators": 150,
-  "max_depth": 14,
-  "training_samples": 4000,
-  "test_samples": 1000,
-  "macro_f1": 0.912,
-  "macro_roc_auc": 0.9922,
-  "per_class": {
+  "model_version": "v2.0-official-ner",
+  "trained_at": "2026-08-30T09:23:01.001706Z",
+  "algorithm": "RandomForestClassifier(n_estimators=180, class_weight='balanced')",
+  "data_sources": [
+    "Geological Survey of India (GSI) - National Landslide Susceptibility Mapping (NLSM) & Bhukosh",
+    "ISRO / NRSC Landslide Atlas of India (1998-2023)",
+    "NASA Global Landslide Catalog (GLC) & COOLR",
+    "India Meteorological Department (IMD) / Copernicus ERA5 Historical Climate Archive"
+  ],
+  "official_events_ingested": 18,
+  "total_training_samples": 1440,
+  "total_test_samples": 360,
+  "accuracy": 0.9444,
+  "macro_f1": 0.9458,
+  "macro_roc_auc": 0.9957,
+  "cross_val_f1_mean": 0.9402,
+  "cross_val_f1_std": 0.0141,
+  "per_class_metrics": {
     "GREEN": {
       "precision": 1.0,
-      "recall": 0.7172,
-      "f1": 0.8353,
-      "support": 99
+      "recall": 0.956,
+      "f1": 0.9775,
+      "support": 91
     },
     "YELLOW": {
-      "precision": 0.8807,
-      "recall": 0.9538,
-      "f1": 0.9158,
-      "support": 325
+      "precision": 0.9495,
+      "recall": 0.9216,
+      "f1": 0.9353,
+      "support": 102
     },
     "ORANGE": {
-      "precision": 0.9367,
-      "recall": 0.9684,
-      "f1": 0.9523,
-      "support": 443
+      "precision": 0.8981,
+      "recall": 0.951,
+      "f1": 0.9238,
+      "support": 102
     },
     "RED": {
-      "precision": 1.0,
-      "recall": 0.8947,
-      "f1": 0.9444,
-      "support": 133
+      "precision": 0.9394,
+      "recall": 0.9538,
+      "f1": 0.9466,
+      "support": 65
     }
   },
-  "feature_importance": {
-    "rainfall_3d_mm": 0.3113,
-    "displacement_rate": 0.2644,
-    "slope_deg": 0.1744,
-    "rainfall_24h_intensity": 0.0867,
-    "fault_distance_m": 0.0482,
-    "soil_moisture_pct": 0.0435,
-    "lithology_idx": 0.0361,
-    "elevation_m": 0.0353
+  "feature_importances": {
+    "rainfall_3d_mm": 0.1914,
+    "slope_deg": 0.1682,
+    "fault_distance_m": 0.1196,
+    "rainfall_24h_intensity": 0.1125,
+    "displacement_rate": 0.112,
+    "lithology_idx": 0.1117,
+    "soil_moisture_pct": 0.099,
+    "elevation_m": 0.0856
   },
-  "disclaimer": "Model trained on synthetic data calibrated to NER geotechnical parameters. Not a substitute for field assessment."
+  "confusion_matrix": [
+    [
+      87,
+      4,
+      0,
+      0
+    ],
+    [
+      0,
+      94,
+      8,
+      0
+    ],
+    [
+      0,
+      1,
+      97,
+      4
+    ],
+    [
+      0,
+      0,
+      3,
+      62
+    ]
+  ],
+  "disclaimer": "AI Early Warning Decision Support Engine trained on official GSI, ISRO-NRSC, NASA GLC, and IMD/ERA5 meteorological datasets for North East India."
 }

@@ -85,3 +85,34 @@ def get_regional_overview() -> Dict[str, Any]:
         "total_stranded_vehicles_ner": total_stranded_vehicles,
         "highest_risk_sector": "Sonapur Tunnel (NH-06) & Teesta Valley (NH-10)"
     }
+
+
+@router.get("/model-provenance")
+def get_model_provenance() -> Dict[str, Any]:
+    """Returns training metrics, accuracy, and official government & NASA data sources."""
+    import os, json
+    metrics_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))), "models", "training_metrics.json")
+    if os.path.exists(metrics_path):
+        with open(metrics_path, "r", encoding="utf-8") as f:
+            return json.load(f)
+    return {
+        "status": "Model active",
+        "data_sources": [
+            "Geological Survey of India (GSI) NLSM",
+            "ISRO / NRSC Landslide Atlas",
+            "NASA Global Landslide Catalog (GLC)",
+            "IMD / Copernicus ERA5 Climate Reanalysis"
+        ]
+    }
+
+
+@router.get("/official-datasets")
+def get_official_datasets() -> Dict[str, Any]:
+    """Returns list of curated official historical landslide events across NER."""
+    from backend.app.ml.official_data_collector import OFFICIAL_NER_LANDSLIDE_INVENTORY
+    return {
+        "total_records": len(OFFICIAL_NER_LANDSLIDE_INVENTORY),
+        "primary_agencies": ["GSI", "ISRO-NRSC", "NASA", "IMD"],
+        "records": OFFICIAL_NER_LANDSLIDE_INVENTORY
+    }
+

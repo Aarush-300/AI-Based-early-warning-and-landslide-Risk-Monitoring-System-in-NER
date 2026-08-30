@@ -1,6 +1,16 @@
 import pytest
 from fastapi.testclient import TestClient
 from backend.app.main import app
+from backend.app.database import init_db, SessionLocal
+from backend.app import seed_data
+
+# Ensure tables and seed data exist for test client
+init_db()
+db = SessionLocal()
+try:
+    seed_data.run_seed(db)
+finally:
+    db.close()
 
 client = TestClient(app)
 
@@ -8,7 +18,7 @@ def test_platform_info():
     response = client.get("/api/info")
     assert response.status_code == 200
     data = response.json()
-    assert "TerraintTrace" in data["platform"]
+    assert "TerrainTrace" in data["platform"]
     assert len(data["supported_states"]) == 8
 
 def test_health_check():
@@ -72,7 +82,7 @@ def test_reports_and_vision():
     response = client.post("/api/v1/reports/submit", json=payload)
     assert response.status_code == 200
     data = response.json()
-    assert data["id"].startswith("REP-")
+    assert data["id"].startswith("REP-") or data["id"].startswith("DB-REP-")
     assert data["ai_analysis"]["hazard_detected"] is True
 
 def test_roads_and_priority():

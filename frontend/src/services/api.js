@@ -1,28 +1,30 @@
-// API Service & IndexedDB Offline Queue Manager for TerraintTrace
+// API Service & IndexedDB Offline Queue Manager for TerrainTrace
 
 const API_BASE = '/api/v1';
 
 export function getAuthToken() {
-  return localStorage.getItem('bhoodrishti_token');
+  return localStorage.getItem('terraintrace_token') || localStorage.getItem('bhoodrishti_token');
 }
 
 export function setAuthToken(token) {
   if (token) {
-    localStorage.setItem('bhoodrishti_token', token);
+    localStorage.setItem('terraintrace_token', token);
   } else {
+    localStorage.removeItem('terraintrace_token');
     localStorage.removeItem('bhoodrishti_token');
   }
 }
 
 export function getCurrentUser() {
-  const user = localStorage.getItem('bhoodrishti_user');
+  const user = localStorage.getItem('terraintrace_user') || localStorage.getItem('bhoodrishti_user');
   return user ? JSON.parse(user) : null;
 }
 
 export function setCurrentUser(user) {
   if (user) {
-    localStorage.setItem('bhoodrishti_user', JSON.stringify(user));
+    localStorage.setItem('terraintrace_user', JSON.stringify(user));
   } else {
+    localStorage.removeItem('terraintrace_user');
     localStorage.removeItem('bhoodrishti_user');
   }
 }
@@ -93,7 +95,7 @@ export function logout() {
 }
 
 // ---------------- IndexedDB Offline Vault ----------------
-const DB_NAME = 'bhoodrishti_offline_vault';
+const DB_NAME = 'terraintrace_offline_vault';
 const DB_VERSION = 1;
 const STORE_REPORTS = 'pending_field_reports';
 

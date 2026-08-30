@@ -116,11 +116,11 @@ def cap_feed(db: Session = Depends(get_db)):
     alerts = db.query(Alert).filter(Alert.status == "ACTIVE").all()
     
     xml = ['<?xml version="1.0" encoding="UTF-8"?>']
-    xml.append('<alerts>')
+    xml.append('<alerts xmlns="urn:oasis:names:tc:emergency:cap:1.2">')
     for a in alerts:
-        xml.append('  <alert>')
+        xml.append('  <alert xmlns="urn:oasis:names:tc:emergency:cap:1.2">')
         xml.append(f'    <identifier>{a.id}</identifier>')
-        xml.append(f'    <sender>{a.source or "BhooDrishti-NER"}</sender>')
+        xml.append(f'    <sender>{a.source or "TerrainTrace-NER"}</sender>')
         xml.append(f'    <sent>{a.created_at.isoformat() if a.created_at else ""}</sent>')
         xml.append(f'    <status>Actual</status>')
         xml.append(f'    <msgType>Alert</msgType>')

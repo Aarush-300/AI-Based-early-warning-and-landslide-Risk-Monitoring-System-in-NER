@@ -1,1 +1,1 @@
-# BhooDrishti-NER backend package
+# TerrainTrace-NER backend package

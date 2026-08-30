@@ -1,12 +1,12 @@
 """
-BhooDrishti-NER Database Engine & Session Factory
+TerrainTrace-NER Database Engine & Session Factory
 Supports SQLite (local/demo) and PostgreSQL (production) via DATABASE_URL.
 """
 import os
 from sqlalchemy import create_engine, event
 from sqlalchemy.orm import sessionmaker, DeclarativeBase
 
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./bhoodrishti.db")
+DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./terraintrace.db")
 
 # SQLite needs special handling for foreign keys
 connect_args = {}

@@ -1,5 +1,5 @@
 """
-BhooDrishti-NER ML Training Pipeline
+TerrainTrace-NER ML Training Pipeline
 Trains a Random Forest classifier on synthetic geotechnical data
 and serializes it for production inference.
 
@@ -86,7 +86,7 @@ def generate_synthetic_training_data(n_samples: int = 5000, seed: int = 42):
 def train_and_evaluate():
     """Train, evaluate, and serialize the landslide risk model."""
     print("=" * 60)
-    print("BhooDrishti-NER ML Training Pipeline")
+    print("TerrainTrace-NER ML Training Pipeline")
     print("=" * 60)
     
     # Generate data

@@ -13,6 +13,7 @@ from backend.app.api.routes_predictions import router as predictions_router
 from backend.app.api.routes_reports import router as reports_router
 from backend.app.api.routes_alerts import router as alerts_router
 from backend.app.api.routes_roads import router as roads_router
+from backend.app.api.routes_sensors import router as sensors_router
 from backend.app.auth.routes_auth import router as auth_router
 from backend.app.data.sensors_service import sensors_service
 
@@ -84,7 +85,7 @@ async def lifespan(app: FastAPI):
     engine.dispose()
 
 app = FastAPI(
-    title="TerraintTrace",
+    title="TerrainTrace-NER",
     version=settings.APP_VERSION,
     description="AI-Enabled Real-Time Landslide Early Warning, GIS Monitoring & Crowdsourced Reporting Platform for the North Eastern Region of India.",
     lifespan=lifespan
@@ -109,12 +110,13 @@ app.include_router(predictions_router, prefix=settings.API_V1_STR)
 app.include_router(reports_router, prefix=settings.API_V1_STR)
 app.include_router(alerts_router, prefix=settings.API_V1_STR)
 app.include_router(roads_router, prefix=settings.API_V1_STR)
+app.include_router(sensors_router, prefix=settings.API_V1_STR)
 app.include_router(auth_router, prefix=settings.API_V1_STR)
 
 @app.get("/api/info")
 def platform_info():
     return {
-        "platform": "TerraintTrace",
+        "platform": "TerrainTrace-NER",
         "version": settings.APP_VERSION,
         "region": "North Eastern Region (NER), India",
         "supported_states": settings.NER_STATES,
@@ -123,7 +125,7 @@ def platform_info():
         "docs_url": "/docs",
         "cap_feed_url": f"{settings.API_V1_STR}/alerts/cap-feed.xml",
         "auth_enabled": True,
-        "demo_credentials_hint": "admin@bhoodrishti.in / admin123"
+        "demo_credentials_hint": "admin@terraintrace.gov.in / admin123"
     }
 
 @app.get("/api/health")

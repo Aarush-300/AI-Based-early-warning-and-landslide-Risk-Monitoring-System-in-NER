@@ -151,3 +151,31 @@ class WeatherForecastItem(BaseModel):
     predicted_risk_level: str
     wind_speed_kmh: float
 
+class HardwareSensorIngestPayload(BaseModel):
+    sensor_id: str = Field(..., description="Unique hardware station ID, e.g., ENCARDIO-VW-0891")
+    api_key: Optional[str] = Field(None, description="Hardware station authentication token")
+    pore_water_pressure_kpa: float = Field(..., description="Piezometer pore water pressure (kPa)")
+    soil_moisture_pct: float = Field(..., description="Volumetric soil moisture saturation percentage (0-100%)")
+    inclinometer_tilt_deg: float = Field(..., description="Biaxial inclinometer tilt angle in degrees")
+    displacement_rate_mm_day: Optional[float] = Field(None, description="Calculated slope displacement rate (mm/day)")
+    current_rainfall_mm_h: Optional[float] = Field(0.0, description="Optical/Tipping bucket rainfall rate (mm/h)")
+    cumulative_24h_rainfall_mm: Optional[float] = Field(0.0, description="24h accumulated rainfall (mm)")
+    acoustic_emission_db: Optional[float] = Field(20.0, description="Ultrasonic micro-seismic acoustic emission (dB)")
+    battery_pct: Optional[int] = Field(100, description="Solar/Lithium battery charge percentage (0-100%)")
+    temperature_c: Optional[float] = Field(22.0, description="Ambient / ground temperature in Celsius")
+    timestamp: Optional[datetime] = None
+
+class HardwareSensorRegisterPayload(BaseModel):
+    sensor_id: str
+    name: str
+    location_name: str
+    state: str
+    district: str
+    lat: float
+    lng: float
+    elevation_m: Optional[float] = 1000.0
+    sensor_type: Optional[str] = "Piezometer + Inclinometer Station"
+    highway_corridor: Optional[str] = None
+    installation_depth_m: Optional[float] = 12.0
+
+

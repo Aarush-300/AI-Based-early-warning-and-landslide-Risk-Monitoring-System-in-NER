@@ -171,7 +171,7 @@ export default function App() {
         {loading ? (
           <div className="flex flex-col items-center justify-center h-[calc(100vh-6rem)] space-y-3">
             <div className="w-12 h-12 border-4 border-amber-500 border-t-transparent rounded-full animate-spin"></div>
-            <p className="text-sm font-bold text-amber-400">Loading TerraintTrace Geospatial Engine...</p>
+            <p className="text-sm font-bold text-amber-400">Loading TerrainTrace Geospatial Engine...</p>
           </div>
         ) : (
           <>

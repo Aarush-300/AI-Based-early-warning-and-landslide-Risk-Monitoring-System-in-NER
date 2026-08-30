@@ -1,0 +1,19 @@
+event_id,location,state,lat,lng,date,hazard_type,source,slope_deg,elevation_m,lithology_idx,rainfall_3d_mm,rainfall_24h_intensity_mm_h,soil_moisture_pct,fault_dist_m,ground_truth_class
+GSI-NER-ML-2023-01,Sonapur Tunnel, NH-06, East Jaintia Hills,Meghalaya,25.1324,92.3682,2023-06-16,Debris Flow & Rockfall,GSI & BRO Incident Report,42.5,1280.0,4,342.3,15.3,100.0,450.0,3
+NASA-GLC-2022-7821,Sohra (Cherrapunji) Rim Slopes,Meghalaya,25.2986,91.7086,2022-06-17,Mudslide / Slope Slip,NASA Global Landslide Catalog #7821,38.0,1430.0,2,602.9,45.0,100.0,850.0,3
+ISRO-NRSC-ML-2020-14,Nongstoin-Shillong Highway,Meghalaya,25.518,91.268,2020-07-22,Translational Slide,ISRO NRSC Landslide Atlas,34.0,1400.0,1,324.0,11.9,100.0,1200.0,2
+GSI-NER-SK-2023-04,29th Mile, Teesta Valley, NH-10,Sikkim,27.062,88.4325,2023-10-04,Flash Flood Induced Toe Erosion & Massive Debris Slide,GSI Teesta Basin Special Assessment,48.0,420.0,5,75.9,9.5,82.0,300.0,3
+NASA-GLC-2021-4390,Singtam-Dikchu Axis, East Sikkim,Sikkim,27.234,88.498,2021-08-11,Rotational Rock-Soil Slide,NASA Global Landslide Catalog #4390,41.0,1150.0,5,55.6,6.5,86.7,600.0,2
+ISRO-NRSC-SK-2022-88,Mangan-Chungthang Road, North Sikkim,Sikkim,27.502,88.532,2022-07-02,Debris Avalanche,ISRO NRSC Landslide Atlas (Rank 1 District),52.0,1780.0,5,108.1,11.3,88.2,250.0,3
+GSI-NER-AS-2022-09,Jatinga, Dima Hasao, NH-27,Assam,25.1215,92.982,2022-05-15,Catastrophic Mudflow & Rail Track Submergence,GSI Dima Hasao Disaster Assessment,36.5,650.0,4,197.6,27.9,89.9,720.0,3
+ISRO-NRSC-AS-2023-11,Haflong Town Ridge, Dima Hasao,Assam,25.178,93.018,2023-06-20,Subsidence & Slope Slump,ISRO NRSC Landslide Inventory,28.0,810.0,4,17.5,4.7,100.0,900.0,2
+GSI-NER-AS-2021-03,Guwahati Naranarayan Ghy Hill Cut,Assam,26.152,91.732,2021-06-14,Artificial Cut Slope Failure,GSI Assam Urban Geological Wing,45.0,120.0,1,42.2,4.4,100.0,2400.0,1
+GSI-NER-NL-2023-18,Dzüdza Bridge, NH-29 Kohima-Dimapur,Nagaland,25.7225,93.923,2023-08-28,Disang Shales Creep & Debris Flow,GSI & Nagaland SDMA Monitored Site,39.0,1120.0,5,81.2,13.4,100.0,350.0,3
+NASA-GLC-2020-5612,Phesama Village, South Kohima, NH-29,Nagaland,25.624,94.112,2020-08-14,Slow Moving Deep-Seated Rotational Slide,NASA Global Landslide Catalog #5612,32.0,1450.0,5,68.8,8.6,100.0,520.0,2
+GSI-NER-MN-2022-01,Tupul Railway Yard, Noney District,Manipur,24.789,93.621,2022-06-30,Major Ijei River Damming Catastrophic Debris Flow,GSI Post-Disaster Scientific Investigation Report,46.0,580.0,5,35.2,2.7,100.0,410.0,3
+ISRO-NRSC-MN-2021-34,Imphal-Jiribam NH-37, Makru Stretch,Manipur,24.812,93.345,2021-07-19,Widespread Shallow Slips,ISRO NRSC Landslide Inventory,35.0,420.0,4,59.9,3.9,87.7,880.0,2
+GSI-NER-AR-2023-05,Bhalukpong-Tawang Corridor, NH-13, West Kameng,Arunachal Pradesh,27.245,92.412,2023-07-14,Gneissic Rock Fall & Avalanche,GSI Arunachal Geological Unit,54.0,2150.0,1,109.9,15.5,88.6,320.0,3
+NASA-GLC-2022-6711,Pasighat-Yingkiong Road, Upper Siang,Arunachal Pradesh,28.215,95.124,2022-08-04,Mudslide / Road Breach,NASA Global Landslide Catalog #6711,37.0,620.0,2,30.3,6.9,85.6,650.0,2
+GSI-NER-MZ-2023-02,Hunthar Veng Slopes, Aizawl, NH-54,Mizoram,23.745,92.705,2023-05-24,Active Urban Creep & Sinking Zone,GSI Mizoram Landslide Hazard Zone (High Vulnerability),33.0,980.0,4,9.4,3.8,64.6,580.0,2
+ISRO-NRSC-MZ-2020-41,Lunglei-Thenzawl Highway,Mizoram,23.085,92.762,2020-09-08,Shallow Soil Slip,ISRO NRSC Landslide Inventory,31.0,720.0,3,8.6,1.6,76.2,1100.0,1
+GSI-NER-TR-2022-01,Baramura Hill Range, NH-08,Tripura,23.892,91.564,2022-06-18,Cut Slope Erosion & Slump,GSI Tripura Unit,24.0,240.0,2,82.9,6.6,85.1,1800.0,1

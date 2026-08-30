@@ -1,5 +1,5 @@
 """
-BhooDrishti-NER Authentication & Authorization
+TerrainTrace-NER Authentication & Authorization
 JWT-based auth with role-based access control.
 """
 import os
@@ -16,7 +16,7 @@ from backend.app.database import get_db
 from backend.app.models.db_models import User
 
 # Configuration
-SECRET_KEY = os.getenv("SECRET_KEY", "bhoodrishti-dev-secret-change-in-production")
+SECRET_KEY = os.getenv("SECRET_KEY", "terraintrace-dev-secret-change-in-production")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "480"))
 

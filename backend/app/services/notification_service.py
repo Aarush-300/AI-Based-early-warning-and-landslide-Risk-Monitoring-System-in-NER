@@ -68,7 +68,7 @@ class NotificationService:
                     
             # Officials get email for any high+ alert
             if user.role in ["admin", "officer"]:
-                self.email_provider.send(f"{user.username}@bhoodrishti.ner", msg, alert)
+                self.email_provider.send(f"{user.username}@terraintrace.ner", msg, alert)
 
 def get_notification_history():
     return _notification_history

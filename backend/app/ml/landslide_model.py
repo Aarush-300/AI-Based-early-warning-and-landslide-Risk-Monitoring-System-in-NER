@@ -20,7 +20,7 @@ class LandslidePredictiveEngine:
         self.caine_alpha_indoburma = 18.50
         self.caine_beta_indoburma = 0.48
         
-        self.model_version = "v1.0"
+        self.model_version = "v2.0-official-ner"
         self._load_or_train_model()
 
     def _load_or_train_model(self):

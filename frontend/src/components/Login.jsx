@@ -52,7 +52,7 @@ export default function Login({ onLogin }) {
           <div className="w-16 h-16 bg-blue-500/20 rounded-2xl flex items-center justify-center mb-4 border border-blue-500/30">
             <ShieldAlert className="w-8 h-8 text-blue-400" />
           </div>
-          <h1 className="text-3xl font-bold text-white tracking-tight mb-2">TerraintTrace</h1>
+          <h1 className="text-3xl font-bold text-white tracking-tight mb-2">TerrainTrace</h1>
           <p className="text-slate-400 text-center text-sm">
             {isCreatingAccount ? 'Create your monitoring account' : 'AI-Powered Landslide Early Warning & GIS Monitoring Platform'}
           </p>

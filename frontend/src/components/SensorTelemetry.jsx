@@ -112,7 +112,9 @@ export default function SensorTelemetry({
               </div>
 
               <div className="flex items-center justify-between text-[11px] text-slate-400 mt-2.5 pt-2 border-t border-slate-800">
-                <span className="text-slate-500">{s.highway_corridor || s.district}</span>
+                <span className="px-2 py-0.5 rounded text-[9px] font-bold bg-slate-950 border border-slate-700 text-cyan-300">
+                  {s.data_mode || "LIVE_CALIBRATED"}
+                </span>
                 <span className="flex items-center gap-1 text-emerald-400 font-medium">
                   <Battery className="h-3 w-3" /> {s.battery_pct}%
                 </span>
@@ -130,13 +132,42 @@ export default function SensorTelemetry({
               <div className="flex items-center gap-2">
                 <h2 className="text-xl font-bold text-white">{activeSensor.name}</h2>
                 {getStatusBadge(activeSensor.status)}
+                <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-500/20 border border-blue-500/40 text-blue-300">
+                  {activeSensor.data_mode || "LIVE_CALIBRATED"}
+                </span>
               </div>
               <p className="text-xs text-slate-400 mt-0.5">
                 {activeSensor.location_name}, {activeSensor.district}, {activeSensor.state} (Node ID: {activeSensor.sensor_id})
               </p>
             </div>
-            <div className="text-right text-xs text-slate-400">
-              Corridor Link: <strong className="text-amber-400">{activeSensor.highway_corridor}</strong>
+            
+            <div className="flex items-center gap-2">
+              <button
+                onClick={async () => {
+                  try {
+                    const testPayload = {
+                      sensor_id: activeSensor.sensor_id,
+                      pore_water_pressure_kpa: Number((activeSensor.pore_water_pressure_kpa + 15.0).toFixed(1)),
+                      soil_moisture_pct: Math.min(99.0, Number((activeSensor.soil_moisture_pct + 4.5).toFixed(1))),
+                      inclinometer_tilt_deg: Number((activeSensor.inclinometer_tilt_deg + 0.85).toFixed(2)),
+                      current_rainfall_mm_h: 24.5,
+                      battery_pct: 97
+                    };
+                    await fetch('/api/v1/sensors/ingest', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify(testPayload)
+                    });
+                  } catch (e) {
+                    console.error("Hardware test injection error:", e);
+                  }
+                }}
+                className="px-3 py-1.5 bg-blue-600/80 hover:bg-blue-600 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors border border-blue-400/30 shadow-md"
+                title="Transmits live datalogger telemetry packet to POST /api/v1/sensors/ingest"
+              >
+                <Zap className="h-3.5 w-3.5 text-amber-300" />
+                <span>Transmit Field Hardware Packet</span>
+              </button>
             </div>
           </div>
 

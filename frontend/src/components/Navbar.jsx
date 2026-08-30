@@ -124,7 +124,7 @@ export default function Navbar({
             <div>
               <div className="flex items-center gap-2">
                 <span className="text-xl font-black tracking-tight text-white bg-clip-text">
-                  Terraint<span className="text-blue-400">Trace</span>
+                  Terrain<span className="text-blue-400">Trace</span>
                 </span>
               </div>
             </div>

@@ -2,12 +2,12 @@ import os
 from pydantic import BaseModel
 
 class Settings(BaseModel):
-    APP_NAME: str = "TerraintTrace"
-    APP_VERSION: str = "1.0.0"
+    APP_NAME: str = "TerrainTrace-NER"
+    APP_VERSION: str = "2.0.0"
     API_V1_STR: str = "/api/v1"
     DEBUG: bool = True
     UPLOAD_DIR: str = os.path.join(os.getcwd(), "uploads")
-    DB_PATH: str = os.path.join(os.getcwd(), "bhoodrishti.db")
+    DB_PATH: str = os.path.join(os.getcwd(), "terraintrace.db")
     
     # Supported North Eastern Region States
     NER_STATES: list[str] = [
