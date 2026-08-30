@@ -10,7 +10,7 @@ import os
 import json
 import numpy as np
 from datetime import datetime, timezone
-from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split, cross_val_score, StratifiedKFold
 from sklearn.metrics import classification_report, confusion_matrix, roc_auc_score, f1_score
 import joblib
@@ -142,4 +142,3 @@ def train_and_serialize_official_model(augment_factor: int = 150):
 
 if __name__ == "__main__":
     train_and_serialize_official_model()
-

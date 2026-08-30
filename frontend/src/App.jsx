@@ -114,7 +114,7 @@ export default function App() {
                 setSensors(payload.sensors);
               }
             }
-          } catch (e) {
+          } catch {
             // ignore parsing error
           }
         };
@@ -129,7 +129,7 @@ export default function App() {
         ws.onerror = () => {
           // Fallback polling if WS unavailable
         };
-      } catch (e) {
+      } catch {
         console.warn('WS fallback to polling');
       }
     };

@@ -31,5 +31,7 @@ if __name__ == "__main__":
     # Auto-open browser in a separate thread
     threading.Thread(target=open_browser, daemon=True).start()
     
-    uvicorn.run("backend.app.main:app", host="127.0.0.1", port=8000, reload=False)
-
+    try:
+        uvicorn.run("backend.app.main:app", host="127.0.0.1", port=8000, reload=False)
+    except KeyboardInterrupt:
+        print("\nServer stopped.")

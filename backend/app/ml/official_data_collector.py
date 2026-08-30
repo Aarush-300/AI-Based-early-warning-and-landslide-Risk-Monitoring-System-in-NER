@@ -9,9 +9,7 @@ Collects, curates, and enriches landslide and hydro-meteorological data from:
 import os
 import json
 import time
-import math
 import urllib.request
-import urllib.parse
 from datetime import datetime, timedelta
 from typing import List, Dict, Any, Tuple
 import numpy as np
@@ -441,4 +439,3 @@ def generate_comprehensive_dataset(augment_factor: int = 150) -> Tuple[np.ndarra
 if __name__ == "__main__":
     X, y, records = generate_comprehensive_dataset(augment_factor=150)
     print(f"\nCompleted official data collection. Feature matrix shape: {X.shape}, Target classes: {np.bincount(y)}")
-

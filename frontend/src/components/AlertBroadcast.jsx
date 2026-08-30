@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { 
   Bell, 
-  AlertTriangle, 
   Volume2, 
   VolumeX, 
   Globe, 
@@ -10,7 +9,6 @@ import {
   Send, 
   CheckCircle, 
   ShieldAlert, 
-  Download, 
   ExternalLink 
 } from 'lucide-react';
 import { broadcastAlert } from '../services/api';
@@ -37,9 +35,6 @@ export default function AlertBroadcast({
   const [instructions, setInstructions] = useState('');
   const [broadcasting, setBroadcasting] = useState(false);
   const [broadcastSuccess, setBroadcastSuccess] = useState(null);
-
-  // CAP XML Viewer Modal
-  const [showCapModal, setShowCapModal] = useState(false);
 
   const handleSpeakAlert = (alert) => {
     if (!window.speechSynthesis) {
@@ -380,4 +375,3 @@ export default function AlertBroadcast({
     </div>
   );
 }
-

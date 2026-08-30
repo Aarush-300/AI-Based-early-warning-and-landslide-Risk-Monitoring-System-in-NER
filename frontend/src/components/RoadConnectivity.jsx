@@ -3,13 +3,9 @@ import {
   Truck, 
   AlertTriangle, 
   Clock, 
-  MapPin, 
   Navigation, 
-  CheckCircle, 
   Wrench, 
   ShieldAlert, 
-  Compass, 
-  ChevronRight, 
   RefreshCw 
 } from 'lucide-react';
 import { updateRoadStatus } from '../services/api';
@@ -279,4 +275,3 @@ export default function RoadConnectivity({
     </div>
   );
 }
-

@@ -1,17 +1,13 @@
 import React, { useState } from 'react';
 import { 
   Camera, 
-  Upload, 
   MapPin, 
-  AlertTriangle, 
   CheckCircle, 
   Eye, 
   Layers, 
   WifiOff, 
-  ShieldCheck, 
   Send, 
-  FileText, 
-  RefreshCw 
+  FileText
 } from 'lucide-react';
 import { submitFieldReport } from '../services/api';
 import { TRANSLATIONS } from '../services/i18n';
@@ -27,7 +23,7 @@ export default function FieldReporting({
   const [reporterRole, setReporterRole] = useState('Citizen');
   const [hazardType, setHazardType] = useState('Tension Cracks');
   const [state, setState] = useState('Meghalaya');
-  const [district, setDistrict] = useState('East Jaintia Hills');
+  const [district] = useState('East Jaintia Hills');
   const [landmark, setLandmark] = useState('');
   const [description, setDescription] = useState('');
   const [roadPassable, setRoadPassable] = useState(false);
@@ -44,7 +40,7 @@ export default function FieldReporting({
           setLat(pos.coords.latitude);
           setLng(pos.coords.longitude);
         },
-        (err) => {
+        () => {
           console.warn('Geolocation denied or unavailable, using fallback coordinates');
         }
       );
@@ -385,4 +381,3 @@ export default function FieldReporting({
     </div>
   );
 }
-

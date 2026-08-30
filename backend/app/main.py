@@ -5,7 +5,7 @@ from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException, stat
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
-from contextlib import asynccontextmanager
+from contextlib import asynccontextmanager, suppress
 
 from backend.app.core.config import settings
 from backend.app.api.routes_gis import router as gis_router
@@ -75,14 +75,16 @@ async def lifespan(app: FastAPI):
     logger.info("Starting telemetry background ticker...")
     ticker_task = asyncio.create_task(telemetry_background_ticker())
     
-    yield
-    
-    # Shutdown
-    logger.info("Shutting down background tasks...")
-    ticker_task.cancel()
-    
-    logger.info("Disposing database connections...")
-    engine.dispose()
+    try:
+        yield
+    finally:
+        logger.info("Shutting down background tasks...")
+        ticker_task.cancel()
+        with suppress(asyncio.CancelledError):
+            await ticker_task
+
+        logger.info("Disposing database connections...")
+        engine.dispose()
 
 app = FastAPI(
     title="TerrainTrace-NER",

@@ -13,19 +13,12 @@ import {
 import L from 'leaflet';
 import { 
   Radio, 
-  AlertTriangle, 
-  ShieldCheck, 
-  Truck, 
-  Building, 
-  Compass, 
   Zap, 
   Eye, 
-  Droplet, 
   Layers, 
-  Info,
-  Maximize2
+  Info
 } from 'lucide-react';
-import { predictRisk, fetchHeatmap, fetchHistoricalLandslides } from '../services/api';
+import { predictRisk } from '../services/api';
 import { TRANSLATIONS } from '../services/i18n';
 
 // Fix standard Leaflet icon paths
@@ -96,7 +89,7 @@ function MapInspector({ onLocationClick }) {
   return null;
 }
 
-import { useSelector, useDispatch } from 'react-redux';
+import { useSelector } from 'react-redux';
 import SubNav from './SubNav';
 
 export default function GISMap({ 
@@ -105,11 +98,9 @@ export default function GISMap({
   sensors = [], 
   reports = [], 
   resources = [], 
-  historical = [],
   currentLang = 'en'
 }) {
   const t = TRANSLATIONS[currentLang] || TRANSLATIONS.en;
-  const dispatch = useDispatch();
   const activeRegion = useSelector((state) => state.navigation.activeRegion);
 
   const [mapCenter, setMapCenter] = useState([26.2006, 92.9376]); // Center of North East India
@@ -135,16 +126,6 @@ export default function GISMap({
   const [showSensors, setShowSensors] = useState(true);
   const [showReports, setShowReports] = useState(true);
   const [showResources, setShowResources] = useState(true);
-  const [showHistorical, setShowHistorical] = useState(true);
-
-  // Dynamic API Data
-  const [heatmapData, setHeatmapData] = useState([]);
-  const [historicalData, setHistoricalData] = useState([]);
-
-  useEffect(() => {
-    fetchHeatmap().then(setHeatmapData).catch(console.error);
-    fetchHistoricalLandslides().then(setHistoricalData).catch(console.error);
-  }, []);
 
   // Probe state
   const [probeLocation, setProbeLocation] = useState(null);

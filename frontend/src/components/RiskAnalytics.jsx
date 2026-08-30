@@ -15,12 +15,8 @@ import {
   Activity, 
   CloudRain, 
   Sliders, 
-  ShieldAlert, 
-  CheckCircle, 
-  AlertOctagon, 
   TrendingUp, 
-  Zap, 
-  Layers 
+  Zap
 } from 'lucide-react';
 import { predictRisk, fetchWeatherForecast } from '../services/api';
 import { TRANSLATIONS } from '../services/i18n';
@@ -38,7 +34,6 @@ export default function RiskAnalytics({ currentLang = 'en' }) {
 
   // Prediction result state
   const [prediction, setPrediction] = useState(null);
-  const [loading, setLoading] = useState(false);
 
   // Weather forecast state
   const [forecastData, setForecastData] = useState([]);
@@ -46,7 +41,6 @@ export default function RiskAnalytics({ currentLang = 'en' }) {
   const [selectedStation, setSelectedStation] = useState({ name: 'Shillong / Sonapur (Meghalaya)', lat: 25.1324, lng: 92.3682 });
 
   const runSimulation = async () => {
-    setLoading(true);
     try {
       const res = await predictRisk({
         lat: selectedStation.lat,
@@ -60,10 +54,8 @@ export default function RiskAnalytics({ currentLang = 'en' }) {
         lithology: lithology
       });
       setPrediction(res);
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setLoading(false);
+    } catch (error) {
+      console.error('Risk prediction failed:', error);
     }
   };
 
@@ -458,4 +450,3 @@ export default function RiskAnalytics({ currentLang = 'en' }) {
     </div>
   );
 }
-

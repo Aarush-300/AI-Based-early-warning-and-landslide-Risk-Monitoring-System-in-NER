@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { setActiveModule } from '../store/navigationSlice';
 import { 
-  Wifi, 
   WifiOff, 
   RefreshCw, 
   Globe, 
@@ -12,8 +11,7 @@ import {
   Truck, 
   FileText, 
   Bell,
-  Mountain,
-  ArrowUpCircle
+  Mountain
 } from 'lucide-react';
 import { LANGUAGES, TRANSLATIONS } from '../services/i18n';
 import { OfflineVault, syncPendingOfflineReports } from '../services/api';
@@ -22,7 +20,6 @@ export default function Navbar({
   currentLang, 
   setCurrentLang, 
   alerts = [],
-  overview = null,
   onLogout,
   user
 }) {

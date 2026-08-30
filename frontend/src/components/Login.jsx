@@ -122,7 +122,7 @@ export default function Login({ onLogin }) {
         </form>
 
         <p className="mt-6 text-center text-sm text-slate-400">
-          {isCreatingAccount ? 'Already have an account?' : 'New to TerraintTrace?'}{' '}
+          {isCreatingAccount ? 'Already have an account?' : 'New to TerrainTrace?'}{' '}
           <button type="button" onClick={switchMode} className="font-semibold text-blue-400 hover:text-blue-300 focus:outline-none focus:underline">
             {isCreatingAccount ? 'Sign in' : 'Create an account'}
           </button>

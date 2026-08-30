@@ -2,13 +2,7 @@ import React, { useState } from 'react';
 import { 
   Radio, 
   Activity, 
-  Droplet, 
-  Compass, 
-  TrendingUp, 
   Battery, 
-  AlertTriangle, 
-  CheckCircle, 
-  Volume2, 
   Zap 
 } from 'lucide-react';
 import { 
@@ -21,13 +15,11 @@ import {
   ResponsiveContainer, 
   Legend 
 } from 'recharts';
-import { TRANSLATIONS } from '../services/i18n';
 
 export default function SensorTelemetry({ 
   sensors = [], 
-  currentLang = 'en' 
+  currentLang: _currentLang = 'en'
 }) {
-  const t = TRANSLATIONS[currentLang] || TRANSLATIONS.en;
   const [selectedSensorId, setSelectedSensorId] = useState(sensors[0]?.sensor_id || null);
 
   const activeSensor = sensors.find(s => s.sensor_id === selectedSensorId) || sensors[0];
@@ -198,4 +190,3 @@ export default function SensorTelemetry({
     </div>
   );
 }
-
