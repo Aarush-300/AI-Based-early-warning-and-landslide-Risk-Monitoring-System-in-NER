@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { 
   MapContainer, 
   TileLayer, 
@@ -6,6 +6,7 @@ import {
   Popup, 
   Polyline, 
   Circle, 
+  CircleMarker,
   useMap, 
   useMapEvents,
   ZoomControl
@@ -16,10 +17,31 @@ import {
   Zap, 
   Eye, 
   Layers, 
-  Info
+  Info,
+  AlertTriangle,
+  ShieldAlert
 } from 'lucide-react';
 import { predictRisk } from '../services/api';
 import { TRANSLATIONS } from '../services/i18n';
+
+const DEFAULT_MAP_CENTER = [26.2006, 92.9376];
+
+const isFiniteCoordinate = (value) => typeof value === 'number' && Number.isFinite(value);
+
+const isValidLatLng = (lat, lng) => (
+  isFiniteCoordinate(lat)
+  && isFiniteCoordinate(lng)
+  && lat >= -90
+  && lat <= 90
+  && lng >= -180
+  && lng <= 180
+);
+
+const isValidPosition = (position) => (
+  Array.isArray(position)
+  && position.length >= 2
+  && isValidLatLng(position[0], position[1])
+);
 
 // Fix standard Leaflet icon paths
 delete L.Icon.Default.prototype._getIconUrl;
@@ -72,7 +94,7 @@ const createResourceIcon = (type) => {
 function MapViewController({ center, zoom }) {
   const map = useMap();
   useEffect(() => {
-    if (center) {
+    if (isValidPosition(center)) {
       map.flyTo(center, zoom || 8, { duration: 1.5 });
     }
   }, [center, zoom, map]);
@@ -83,6 +105,8 @@ function MapViewController({ center, zoom }) {
 function MapInspector({ onLocationClick }) {
   useMapEvents({
     click(e) {
+      // Leaflet can bubble one physical interaction through nested map layers.
+      // The parent callback deduplicates it before requesting a prediction.
       onLocationClick(e.latlng);
     }
   });
@@ -98,27 +122,27 @@ export default function GISMap({
   sensors = [], 
   reports = [], 
   resources = [], 
+  predictedRiskLocations = [],
   currentLang = 'en'
 }) {
   const t = TRANSLATIONS[currentLang] || TRANSLATIONS.en;
   const activeRegion = useSelector((state) => state.navigation.activeRegion);
 
-  const [mapCenter, setMapCenter] = useState([26.2006, 92.9376]); // Center of North East India
-  const [zoomLevel, setZoomLevel] = useState(7);
-
-  // Sync map center with Redux activeRegion
-  useEffect(() => {
-    if (!activeRegion) {
-      setMapCenter([26.2006, 92.9376]);
-      setZoomLevel(7);
-    } else {
-      const st = states.find((s) => s.name === activeRegion);
-      if (st) {
-        setMapCenter(st.center);
-        setZoomLevel(9);
-      }
-    }
-  }, [activeRegion, states]);
+  // The map position is derived from the selected region, so it cannot become
+  // stale when the available state data changes.
+  const safeStates = Array.isArray(states) ? states : [];
+  const safeHighways = Array.isArray(highways) ? highways : [];
+  const safeSensors = Array.isArray(sensors) ? sensors : [];
+  const safeReports = Array.isArray(reports) ? reports : [];
+  const safeResources = Array.isArray(resources) ? resources : [];
+  const safePredictedRiskLocations = Array.isArray(predictedRiskLocations)
+    ? predictedRiskLocations
+    : [];
+  const selectedState = safeStates.find((state) => state?.name === activeRegion);
+  const mapCenter = isValidPosition(selectedState?.center)
+    ? selectedState.center
+    : DEFAULT_MAP_CENTER;
+  const zoomLevel = selectedState ? 9 : 7;
 
   // Layer Toggles
   const [showHeatmap, setShowHeatmap] = useState(true);
@@ -126,13 +150,23 @@ export default function GISMap({
   const [showSensors, setShowSensors] = useState(true);
   const [showReports, setShowReports] = useState(true);
   const [showResources, setShowResources] = useState(true);
+  const [showPredictedRisk, setShowPredictedRisk] = useState(true);
 
   // Probe state
   const [probeLocation, setProbeLocation] = useState(null);
   const [probeLoading, setProbeLoading] = useState(false);
   const [probeResult, setProbeResult] = useState(null);
+  const activeProbeKey = useRef(null);
+  const probeRequestId = useRef(0);
 
-  const handleMapProbe = async (latlng) => {
+  const handleMapProbe = useCallback(async (latlng) => {
+    if (!isValidLatLng(latlng?.lat, latlng?.lng)) return;
+
+    const probeKey = `${latlng.lat.toFixed(5)},${latlng.lng.toFixed(5)}`;
+    if (activeProbeKey.current === probeKey) return;
+
+    activeProbeKey.current = probeKey;
+    const requestId = ++probeRequestId.current;
     setProbeLocation(latlng);
     setProbeLoading(true);
     setProbeResult(null);
@@ -141,13 +175,13 @@ export default function GISMap({
         lat: latlng.lat,
         lng: latlng.lng
       });
-      setProbeResult(res);
+      if (requestId === probeRequestId.current) setProbeResult(res);
     } catch (err) {
-      console.error('Probe error:', err);
+      if (requestId === probeRequestId.current) console.error('Probe error:', err);
     } finally {
-      setProbeLoading(false);
+      if (requestId === probeRequestId.current) setProbeLoading(false);
     }
-  };
+  }, []);
 
   const getHighwayColor = (riskLevel) => {
     switch (riskLevel) {
@@ -158,20 +192,48 @@ export default function GISMap({
     }
   };
 
+  // Map model risk levels (GREEN/YELLOW/ORANGE/RED) to marker colors
+  const getRiskColor = (level) => {
+    switch (level) {
+      case 'RED': return '#ef4444';
+      case 'ORANGE': return '#f97316';
+      case 'YELLOW': return '#eab308';
+      case 'GREEN': default: return '#10b981';
+    }
+  };
+
+  const getRiskRadius = (level) => {
+    switch (level) {
+      case 'RED': return 10;
+      case 'ORANGE': return 9;
+      case 'YELLOW': return 8;
+      default: return 7;
+    }
+  };
+
+  const getRiskBadgeClasses = (level) => {
+    switch (level) {
+      case 'RED': return 'bg-red-500 text-white';
+      case 'ORANGE': return 'bg-orange-500 text-white';
+      case 'YELLOW': return 'bg-yellow-500 text-slate-900';
+      case 'GREEN': default: return 'bg-emerald-500 text-white';
+    }
+  };
+
   return (
     <div className="relative w-full h-[calc(100vh-6rem)] bg-slate-950 flex flex-col overflow-hidden">
       
       {/* Floating Glassmorphic SubNav for Regions */}
-      <SubNav states={states} />
+      <SubNav states={safeStates} />
 
       {/* Main Leaflet Map View */}
-      <div className="flex-1 w-full h-full relative">
+      <div className="relative min-h-0 flex-1 w-full">
         <MapContainer
           center={mapCenter}
           zoom={zoomLevel}
           scrollWheelZoom={true}
           zoomControl={false}
-          className="w-full h-full"
+          className="absolute inset-0"
         >
           <ZoomControl position="bottomright" />
           <MapViewController center={mapCenter} zoom={zoomLevel} />
@@ -211,7 +273,11 @@ export default function GISMap({
           )}
 
           {/* 2. Highway Corridors */}
-          {showHighways && highways.map((hw) => {
+          {showHighways && safeHighways.filter((hw) => (
+            Array.isArray(hw?.coordinates)
+            && hw.coordinates.length >= 2
+            && hw.coordinates.every(isValidPosition)
+          )).map((hw) => {
             const color = getHighwayColor(hw.risk_level);
             return (
               <React.Fragment key={hw.corridor_id}>
@@ -220,7 +286,7 @@ export default function GISMap({
                   pathOptions={{
                     color: color,
                     weight: hw.risk_level === 'RED' ? 6 : 4,
-                    dashArray: hw.status.includes('BLOCKED') ? '8, 8' : undefined,
+                    dashArray: hw.status?.includes('BLOCKED') ? '8, 8' : undefined,
                     opacity: 0.95
                   }}
                 >
@@ -271,7 +337,7 @@ export default function GISMap({
           })}
 
           {/* 3. Real-Time IoT Sensor Nodes */}
-          {showSensors && sensors.map((s) => (
+          {showSensors && safeSensors.filter((sensor) => isValidLatLng(sensor?.lat, sensor?.lng)).map((s) => (
             <Marker
               key={s.sensor_id}
               position={[s.lat, s.lng]}
@@ -320,7 +386,7 @@ export default function GISMap({
           ))}
 
           {/* 4. Verified Field Reports */}
-          {showReports && reports.map((r) => (
+          {showReports && safeReports.filter((report) => isValidLatLng(report?.lat, report?.lng)).map((r) => (
             <Marker
               key={r.id}
               position={[r.lat, r.lng]}
@@ -358,7 +424,7 @@ export default function GISMap({
           ))}
 
           {/* 5. Emergency Shelters & Hospitals */}
-          {showResources && resources.map((res) => (
+          {showResources && safeResources.filter((resource) => isValidLatLng(resource?.lat, resource?.lng)).map((res) => (
             <Marker
               key={res.id}
               position={[res.lat, res.lng]}
@@ -386,6 +452,108 @@ export default function GISMap({
               </Popup>
             </Marker>
           ))}
+
+          {/* 6. ML Predicted Risk Locations — powered by LandslidePredictiveEngine.predict_risk() */}
+          {showPredictedRisk && safePredictedRiskLocations.filter((feature) => {
+            const coordinates = feature?.geometry?.coordinates;
+            return Array.isArray(coordinates) && isValidLatLng(coordinates[1], coordinates[0]);
+          }).map((feature, idx) => {
+            const coords = feature.geometry.coordinates; // [lng, lat]
+            const p = feature.properties || {};
+            const color = getRiskColor(p.risk_level);
+            const radius = getRiskRadius(p.risk_level);
+            return (
+              <CircleMarker
+                key={`prl-${idx}`}
+                center={[coords[1], coords[0]]}
+                radius={radius}
+                pathOptions={{
+                  fillColor: color,
+                  color: '#ffffff',
+                  weight: 2,
+                  opacity: 1,
+                  fillOpacity: 0.85,
+                }}
+              >
+                <Popup>
+                  <div className="p-2 max-w-sm text-slate-100">
+                    {/* Header */}
+                    <div className="flex items-center justify-between gap-2 mb-1">
+                      <span className="font-bold text-sm text-white flex items-center gap-1.5">
+                        <ShieldAlert className="h-4 w-4 text-amber-400" />
+                        {p.location_name}
+                      </span>
+                      <span className={`px-2 py-0.5 text-[10px] font-bold rounded ${getRiskBadgeClasses(p.risk_level)}`}>
+                        {p.risk_level}
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-400 mb-2">{p.state} • Risk Score: {Math.round(p.risk_score * 100)}%</p>
+
+                    {/* Coordinates & Key Metrics */}
+                    <div className="grid grid-cols-2 gap-2 text-xs bg-slate-900/90 p-2.5 rounded-lg border border-slate-700/80 mb-2">
+                      <div className="bg-slate-800/60 p-1.5 rounded">
+                        <div className="text-[10px] text-slate-400">Latitude</div>
+                        <div className="font-bold text-white text-sm">{coords[1].toFixed(4)}</div>
+                      </div>
+                      <div className="bg-slate-800/60 p-1.5 rounded">
+                        <div className="text-[10px] text-slate-400">Longitude</div>
+                        <div className="font-bold text-white text-sm">{coords[0].toFixed(4)}</div>
+                      </div>
+                      <div className="bg-slate-800/60 p-1.5 rounded">
+                        <div className="text-[10px] text-slate-400">Factor of Safety</div>
+                        <div className={`font-bold text-sm ${p.factor_of_safety < 1.2 ? 'text-rose-400' : 'text-emerald-400'}`}>{p.factor_of_safety}</div>
+                      </div>
+                      <div className="bg-slate-800/60 p-1.5 rounded">
+                        <div className="text-[10px] text-slate-400">Caine I-D Ratio</div>
+                        <div className={`font-bold text-sm ${p.caine_threshold_ratio >= 1.0 ? 'text-rose-400' : 'text-amber-400'}`}>{p.caine_threshold_ratio}x</div>
+                      </div>
+                    </div>
+
+                    {/* Environmental Inputs */}
+                    <div className="grid grid-cols-2 gap-1.5 text-[11px] bg-slate-900/80 p-2 rounded border border-slate-700/60 mb-2">
+                      <div><span className="text-slate-400">Slope:</span> <strong className="text-white">{p.slope_deg}°</strong></div>
+                      <div><span className="text-slate-400">Elevation:</span> <strong className="text-white">{p.elevation_m}m</strong></div>
+                      <div><span className="text-slate-400">Rain (3d):</span> <strong className="text-cyan-300">{p.rainfall_3d_mm}mm</strong></div>
+                      <div><span className="text-slate-400">Rain (24h):</span> <strong className="text-cyan-300">{p.rainfall_24h_mm}mm</strong></div>
+                      <div><span className="text-slate-400">Soil Moist:</span> <strong className="text-blue-400">{p.soil_moisture_pct}%</strong></div>
+                      <div><span className="text-slate-400">Tilt Rate:</span> <strong className="text-amber-400">{p.inclinometer_tilt_rate_mm_day} mm/d</strong></div>
+                      <div className="col-span-2"><span className="text-slate-400">Lithology:</span> <strong className="text-slate-200">{p.lithology_type}</strong></div>
+                    </div>
+
+                    {/* Contributing Factors */}
+                    {Array.isArray(p.contributing_factors) && p.contributing_factors.length > 0 && (
+                      <div className="text-[11px] bg-slate-900/50 p-1.5 rounded border border-slate-800 mb-2">
+                        <span className="text-slate-400 font-bold">Contributing Factors:</span>
+                        <ul className="mt-1 space-y-0.5">
+                          {p.contributing_factors.map((cf, i) => (
+                            <li key={i} className="text-slate-300">
+                              <span className={`font-semibold ${cf.level === 'VERY HIGH' || cf.level === 'CRITICAL' ? 'text-rose-400' : cf.level === 'HIGH' ? 'text-orange-400' : 'text-amber-300'}`}>
+                                {cf.level}
+                              </span>
+                              {' '}{cf.factor}: {cf.value}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                    {/* Dominant Trigger */}
+                    {p.dominant_trigger && (
+                      <div className="text-[11px] text-slate-300 bg-slate-900/50 p-1.5 rounded border border-slate-800 mb-2">
+                        <span className="text-slate-400 font-bold">Dominant Trigger:</span> {p.dominant_trigger}
+                      </div>
+                    )}
+
+                    {/* Disclaimer */}
+                    <div className="text-[9px] text-amber-400/70 flex items-center gap-1 pt-1 border-t border-slate-800">
+                      <AlertTriangle className="h-3 w-3 flex-shrink-0" />
+                      Simulated demo inputs • Model v{p.model_version}
+                    </div>
+                  </div>
+                </Popup>
+              </CircleMarker>
+            );
+          })}
 
           {/* Interactive Map Probe Result Popup */}
           {probeLocation && (
@@ -454,10 +622,18 @@ export default function GISMap({
               <input type="checkbox" checked={showResources} onChange={(e) => setShowResources(e.target.checked)} className="rounded text-amber-500 focus:ring-0" />
               <span>Hospitals & NDRF Emergency Bases</span>
             </label>
+            <label className="flex items-center gap-2 cursor-pointer hover:text-white">
+              <input type="checkbox" checked={showPredictedRisk} onChange={(e) => setShowPredictedRisk(e.target.checked)} className="rounded text-amber-500 focus:ring-0" />
+              <span>ML Predicted Risk Locations ({safePredictedRiskLocations.length})</span>
+            </label>
           </div>
           <div className="text-[10px] text-amber-400/80 pt-1 border-t border-slate-800 flex items-center gap-1">
             <Info className="h-3 w-3" />
             <span>Tip: Click anywhere on terrain to probe AI slope risk</span>
+          </div>
+          <div className="text-[9px] text-amber-400/60 flex items-center gap-1 mt-1">
+            <AlertTriangle className="h-3 w-3 flex-shrink-0" />
+            <span>Environmental/sensor values in ML Risk layer are simulated for prototype demo</span>
           </div>
         </div>
 

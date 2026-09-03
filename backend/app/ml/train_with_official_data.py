@@ -9,7 +9,7 @@ Usage:
 import os
 import json
 import numpy as np
-from datetime import datetime, timezone
+from datetime import datetime
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split, cross_val_score, StratifiedKFold
 from sklearn.metrics import classification_report, confusion_matrix, roc_auc_score, f1_score
@@ -99,7 +99,7 @@ def train_and_serialize_official_model(augment_factor: int = 150):
     
     training_summary = {
         "model_version": "v2.0-official-ner",
-        "trained_at": datetime.utcnow().isoformat() + "Z",
+        "trained_at": datetime.now(datetime.UTC).isoformat(),
         "algorithm": "RandomForestClassifier(n_estimators=180, class_weight='balanced')",
         "data_sources": [
             "Geological Survey of India (GSI) - National Landslide Susceptibility Mapping (NLSM) & Bhukosh",

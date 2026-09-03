@@ -1,5 +1,4 @@
 # Comprehensive GIS spatial data for North Eastern Region (NER)
-from typing import List, Dict, Any
 
 NER_STATES_DATA = [
     {

@@ -38,7 +38,7 @@ def evaluate_risk_and_alert(db, lat, lng, risk_score, risk_level, location_name,
             longitude=lng,
             radius_km=10.0,
             description=f"Risk Score: {risk_score:.2f}. Reason: {reason}",
-            issued_at=datetime.utcnow(),
+            issued_at=datetime.now(datetime.UTC),
             translations_json=generate_multilingual_translations(title, severity)
         )
         db.add(alert)
@@ -62,7 +62,7 @@ def resolve_alert(db, alert_id):
     alert = db.query(Alert).filter(Alert.id == alert_id).first()
     if alert and alert.status in ["ACTIVE", "ACKNOWLEDGED"]:
         alert.status = "RESOLVED"
-        alert.resolved_at = datetime.utcnow()
+        alert.resolved_at = datetime.now(datetime.UTC)
         db.commit()
         db.refresh(alert)
     return alert

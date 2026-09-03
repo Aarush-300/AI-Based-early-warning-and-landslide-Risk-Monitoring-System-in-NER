@@ -3,7 +3,7 @@ TerrainTrace-NER In-Situ IoT Hardware Telemetry & Sensor Ingestion Router
 Provides endpoints for physical dataloggers (Campbell Scientific, Encardio-Rite, LoRaWAN)
 to stream real-time geotechnical slope sensor readings directly into the platform.
 """
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import Dict, Any, List
 import datetime

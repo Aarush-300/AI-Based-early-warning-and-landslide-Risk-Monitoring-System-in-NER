@@ -19,6 +19,7 @@ import {
   fetchRoads,
   fetchEmergencyResources,
   fetchHistoricalLandslides,
+  fetchPredictedRiskLocations,
   getCurrentUser,
   logout
 } from './services/api';
@@ -38,6 +39,7 @@ export default function App() {
   const [roads, setRoads] = useState([]);
   const [resources, setResources] = useState([]);
   const [historical, setHistorical] = useState([]);
+  const [predictedRiskLocations, setPredictedRiskLocations] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const loadAllData = async () => {
@@ -51,7 +53,8 @@ export default function App() {
         alData,
         rdData,
         rsData,
-        hsData
+        hsData,
+        prlData
       ] = await Promise.all([
         fetchOverview().catch(() => null),
         fetchStates().catch(() => []),
@@ -61,7 +64,8 @@ export default function App() {
         fetchAlerts().catch(() => []),
         fetchRoads().catch(() => []),
         fetchEmergencyResources().catch(() => []),
-        fetchHistoricalLandslides().catch(() => [])
+        fetchHistoricalLandslides().catch(() => []),
+        fetchPredictedRiskLocations().catch(() => ({ features: [] }))
       ]);
 
       if (ovData) setOverview(ovData);
@@ -73,6 +77,7 @@ export default function App() {
       setRoads(rdData || []);
       setResources(rsData || []);
       setHistorical(hsData || []);
+      setPredictedRiskLocations((prlData && prlData.features) || []);
     } catch (err) {
       console.error('Failed loading initial master dataset:', err);
     } finally {
@@ -83,7 +88,8 @@ export default function App() {
   useEffect(() => {
     if (!currentUser) return;
     
-    loadAllData();
+    // Start after the effect has subscribed to component lifecycle changes.
+    void Promise.resolve().then(loadAllData);
 
     // Setup WebSocket connection for live telemetry ticks
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
@@ -183,6 +189,7 @@ export default function App() {
                 reports={reports}
                 resources={resources}
                 historical={historical}
+                predictedRiskLocations={predictedRiskLocations}
                 currentLang={currentLang}
               />
             )}

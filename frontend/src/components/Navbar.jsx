@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { setActiveModule } from '../store/navigationSlice';
 import { 
@@ -32,35 +32,16 @@ export default function Navbar({
 
   const t = TRANSLATIONS[currentLang] || TRANSLATIONS.en;
 
-  const checkPending = async () => {
+  const checkPending = useCallback(async () => {
     try {
       const list = await OfflineVault.getAllPendingReports();
       setPendingCount(list.length);
     } catch (e) {
       console.warn(e);
     }
-  };
-
-  useEffect(() => {
-    const handleOnline = () => {
-      setIsOnline(true);
-      handleSync();
-    };
-    const handleOffline = () => setIsOnline(false);
-
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
-    checkPending();
-    const interval = setInterval(checkPending, 5000);
-
-    return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
-      clearInterval(interval);
-    };
   }, []);
 
-  const handleSync = async () => {
+  const handleSync = useCallback(async () => {
     if (pendingCount === 0 || syncing) return;
     setSyncing(true);
     try {
@@ -71,7 +52,26 @@ export default function Navbar({
     } finally {
       setSyncing(false);
     }
-  };
+  }, [checkPending, pendingCount, syncing]);
+
+  useEffect(() => {
+    const handleOnline = () => {
+      setIsOnline(true);
+      void handleSync();
+    };
+    const handleOffline = () => setIsOnline(false);
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    void Promise.resolve().then(checkPending);
+    const interval = setInterval(() => void checkPending(), 5000);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+      clearInterval(interval);
+    };
+  }, [checkPending, handleSync]);
 
   const navItems = [
     { id: 'map', label: t.nav_map, icon: Layers },

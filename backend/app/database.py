@@ -41,8 +41,4 @@ def get_db():
 
 def init_db():
     """Create all tables. Called on application startup."""
-    from backend.app.models.db_models import (
-        User, Location, Sensor, SensorReading, FieldReport,
-        Alert, Road, Shelter, ModelPrediction, AuditLog
-    )
     Base.metadata.create_all(bind=engine)

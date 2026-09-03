@@ -1,5 +1,5 @@
-from typing import List, Dict, Any
-from backend.app.data.ner_geodata import HIGHWAY_CORRIDORS, EMERGENCY_RESOURCES
+from typing import Dict, Any
+from backend.app.data.ner_geodata import HIGHWAY_CORRIDORS
 
 class EmergencyResponseEngine:
     def __init__(self):

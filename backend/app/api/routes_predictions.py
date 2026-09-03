@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException, Query, status
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any
 from backend.app.models.schemas import LandslideRiskPredictionRequest, LandslideRiskPredictionResponse
 from backend.app.ml.landslide_model import landslide_engine
 from backend.app.data.weather_service import LiveWeatherUnavailable, weather_service
@@ -90,7 +90,8 @@ def get_regional_overview() -> Dict[str, Any]:
 @router.get("/model-provenance")
 def get_model_provenance() -> Dict[str, Any]:
     """Returns training metrics, accuracy, and official government & NASA data sources."""
-    import os, json
+    import os
+    import json
     metrics_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))), "models", "training_metrics.json")
     if os.path.exists(metrics_path):
         with open(metrics_path, "r", encoding="utf-8") as f:

@@ -183,6 +183,12 @@ export async function fetchHeatmap() {
   return res.json();
 }
 
+export async function fetchPredictedRiskLocations() {
+  const res = await authFetch(`${API_BASE}/gis/predicted-risk-locations`);
+  if (!res.ok) throw new Error('Failed to fetch predicted risk locations');
+  return res.json();
+}
+
 export async function fetchHistoricalLandslides() {
   const res = await authFetch(`${API_BASE}/gis/historical`);
   if (!res.ok) throw new Error('Failed to fetch historical landslides');

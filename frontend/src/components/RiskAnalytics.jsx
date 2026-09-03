@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { 
   AreaChart, 
   Area, 
@@ -40,7 +40,7 @@ export default function RiskAnalytics({ currentLang = 'en' }) {
   const [currentWx, setCurrentWx] = useState(null);
   const [selectedStation, setSelectedStation] = useState({ name: 'Shillong / Sonapur (Meghalaya)', lat: 25.1324, lng: 92.3682 });
 
-  const runSimulation = async () => {
+  const runSimulation = useCallback(async () => {
     try {
       const res = await predictRisk({
         lat: selectedStation.lat,
@@ -57,9 +57,9 @@ export default function RiskAnalytics({ currentLang = 'en' }) {
     } catch (error) {
       console.error('Risk prediction failed:', error);
     }
-  };
+  }, [selectedStation, slopeDeg, rain3d, rain24h, soilMoisture, tiltRate, lithology]);
 
-  const loadForecast = async () => {
+  const loadForecast = useCallback(async () => {
     try {
       const data = await fetchWeatherForecast(selectedStation.lat, selectedStation.lng, selectedStation.name);
       setCurrentWx(data.current);
@@ -67,18 +67,18 @@ export default function RiskAnalytics({ currentLang = 'en' }) {
     } catch (e) {
       console.error(e);
     }
-  };
+  }, [selectedStation]);
 
   useEffect(() => {
-    loadForecast();
-  }, [selectedStation]);
+    void Promise.resolve().then(loadForecast);
+  }, [loadForecast]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
       runSimulation();
     }, 500);
     return () => clearTimeout(timer);
-  }, [slopeDeg, rain3d, rain24h, soilMoisture, tiltRate, lithology, selectedStation]);
+  }, [runSimulation]);
 
   // Caine I-D theoretical curve points
   const caineCurveData = [

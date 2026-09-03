@@ -5,7 +5,7 @@ All persistent entities for the landslide early warning platform.
 import datetime
 from sqlalchemy import (
     Column, Integer, String, Float, Boolean, Text, DateTime,
-    ForeignKey, Index, Enum as SAEnum
+    ForeignKey, Index
 )
 from sqlalchemy.orm import relationship
 from backend.app.database import Base

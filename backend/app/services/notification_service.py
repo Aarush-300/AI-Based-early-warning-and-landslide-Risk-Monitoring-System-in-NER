@@ -10,7 +10,7 @@ class NotificationProvider:
 class MockSMSProvider(NotificationProvider):
     def send(self, recipient, message, alert=None):
         record = {
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(datetime.UTC).isoformat(),
             "provider": "SMS",
             "recipient": recipient,
             "message": message,
@@ -22,7 +22,7 @@ class MockSMSProvider(NotificationProvider):
 class MockEmailProvider(NotificationProvider):
     def send(self, recipient, message, alert=None):
         record = {
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(datetime.UTC).isoformat(),
             "provider": "Email",
             "recipient": recipient,
             "message": message,
@@ -34,7 +34,7 @@ class MockEmailProvider(NotificationProvider):
 class MockPushProvider(NotificationProvider):
     def send(self, recipient, message, alert=None):
         record = {
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(datetime.UTC).isoformat(),
             "provider": "Push",
             "recipient": recipient,
             "message": message,

@@ -1,7 +1,7 @@
 import math
 import os
 import numpy as np
-from typing import Dict, Any, List
+from typing import Dict, Any
 from sklearn.ensemble import RandomForestClassifier
 import joblib
 import logging
@@ -236,7 +236,7 @@ class LandslidePredictiveEngine:
             contributing_factors.append({"factor": "All Parameters", "level": "NORMAL", "value": "Within safe thresholds", "weight": 0.0})
         
         # Sort by weight descending
-        contributing_factors.sort(key=lambda x: x["weight"], reverse=True)
+        contributing_factors.sort(key=lambda x: float(str(x.get("weight", 0.0))), reverse=True)
         
         # Confidence based on RF probability and FoS agreement
         confidence = round(float(probabilities[pred_class] * 100), 1)

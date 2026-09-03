@@ -1,13 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException, Response
 from sqlalchemy.orm import Session
-from typing import List, Dict, Any
 import datetime
 import json
 
 from backend.app.database import get_db
 from backend.app.models.db_models import Alert
-from backend.app.models.schemas import AlertCreate, AlertItem
-from backend.app.auth.auth_service import get_current_user
+from backend.app.models.schemas import AlertCreate
 
 router = APIRouter(prefix="/alerts", tags=["Alerts & CAP"])
 
@@ -71,7 +69,8 @@ def broadcast_alert(alert: AlertCreate, db: Session = Depends(get_db)):
     if db_alert.translations_json:
         try:
             translations = json.loads(db_alert.translations_json)
-        except:
+        except (TypeError, json.JSONDecodeError):
+            # Retain the default text when legacy data contains invalid JSON.
             pass
             
     return {
@@ -97,7 +96,7 @@ def acknowledge_alert(alert_id: int, db: Session = Depends(get_db)):
     if not alert:
         raise HTTPException(status_code=404, detail="Alert not found")
     alert.status = "ACKNOWLEDGED"
-    alert.acknowledged_at = datetime.datetime.utcnow()
+    alert.acknowledged_at = datetime.datetime.now(datetime.UTC)
     db.commit()
     return {"message": "Alert acknowledged", "id": alert_id}
 
@@ -107,7 +106,7 @@ def resolve_alert(alert_id: int, db: Session = Depends(get_db)):
     if not alert:
         raise HTTPException(status_code=404, detail="Alert not found")
     alert.status = "RESOLVED"
-    alert.resolved_at = datetime.datetime.utcnow()
+    alert.resolved_at = datetime.datetime.now(datetime.UTC)
     db.commit()
     return {"message": "Alert resolved", "id": alert_id}
 
@@ -122,14 +121,14 @@ def cap_feed(db: Session = Depends(get_db)):
         xml.append(f'    <identifier>{a.id}</identifier>')
         xml.append(f'    <sender>{a.source or "TerrainTrace-NER"}</sender>')
         xml.append(f'    <sent>{a.created_at.isoformat() if a.created_at else ""}</sent>')
-        xml.append(f'    <status>Actual</status>')
-        xml.append(f'    <msgType>Alert</msgType>')
+        xml.append('    <status>Actual</status>')
+        xml.append('    <msgType>Alert</msgType>')
         xml.append('    <info>')
         xml.append(f'      <category>{a.category}</category>')
         xml.append(f'      <event>{a.title}</event>')
-        xml.append(f'      <urgency>Immediate</urgency>')
+        xml.append('      <urgency>Immediate</urgency>')
         xml.append(f'      <severity>{a.severity}</severity>')
-        xml.append(f'      <certainty>Observed</certainty>')
+        xml.append('      <certainty>Observed</certainty>')
         xml.append(f'      <headline>{a.title}</headline>')
         xml.append(f'      <description>{a.reason}</description>')
         xml.append(f'      <instruction>{a.recommended_action}</instruction>')

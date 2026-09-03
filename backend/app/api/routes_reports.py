@@ -1,12 +1,11 @@
 import os
 import uuid
 import base64
-import json
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import List, Dict, Any, Optional
 from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.orm import Session
-from backend.app.models.schemas import FieldReportCreate, FieldReportResponse
+from backend.app.models.schemas import FieldReportCreate
 from backend.app.models.db_models import FieldReport
 from backend.app.database import get_db
 from backend.app.ml.vision_model import vision_engine
@@ -158,7 +157,7 @@ def get_reports(state: Optional[str] = None, hazard_type: Optional[str] = None, 
 
 @router.post("/submit")
 def submit_report(report_data: FieldReportCreate, db: Session = Depends(get_db)) -> Dict[str, Any]:
-    report_id = f"REP-{datetime.utcnow().strftime('%Y%m%d')}-{uuid.uuid4().hex[:5].upper()}"
+    report_id = f"REP-{datetime.now(UTC).strftime('%Y%m%d')}-{uuid.uuid4().hex[:5].upper()}"
     
     ai_result = None
     image_saved_url = None
@@ -198,7 +197,7 @@ def submit_report(report_data: FieldReportCreate, db: Session = Depends(get_db))
             "ai_remarks": "Report logged into disaster queue. Verification team notified."
         }
         
-    created_date = report_data.offline_created_at or datetime.utcnow()
+    created_date = report_data.offline_created_at or datetime.now(UTC)
     
     db_report = FieldReport(
         reporter_name=report_data.reporter_name or "Anonymous Citizen",

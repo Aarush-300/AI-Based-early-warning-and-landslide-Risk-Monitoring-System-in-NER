@@ -122,7 +122,7 @@ def platform_info():
         "version": settings.APP_VERSION,
         "region": "North Eastern Region (NER), India",
         "supported_states": settings.NER_STATES,
-        "supported_languages": [l["name"] for l in settings.LANGUAGES],
+        "supported_languages": [language["name"] for language in settings.LANGUAGES],
         "status": "OPERATIONAL",
         "docs_url": "/docs",
         "cap_feed_url": f"{settings.API_V1_STR}/alerts/cap-feed.xml",

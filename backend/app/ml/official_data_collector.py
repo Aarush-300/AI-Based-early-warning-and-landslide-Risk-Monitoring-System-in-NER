@@ -302,7 +302,7 @@ def fetch_historical_weather(lat: float, lng: float, date_str: str) -> Dict[str,
                 "rainfall_24h_intensity_mm_h": round(float(peak_hourly), 2),
                 "soil_moisture_pct": round(float(soil_pct), 1)
             }
-    except Exception as exc:
+    except Exception:
         # High-precision regional statistical estimate fallback if network times out
         lat_weight = (lat - 24.0) * 10.0
         return {
@@ -405,8 +405,8 @@ def generate_comprehensive_dataset(augment_factor: int = 150) -> Tuple[np.ndarra
     n_controls = len(features_list) // 3
     for _ in range(n_controls):
         valley = ner_valley_coords[np.random.randint(0, len(ner_valley_coords))]
-        slope = np.clip(np.random.normal(valley["slope"], 4.0), 5.0, 24.0)
-        elev = np.clip(np.random.normal(valley["elev"], 30.0), 40.0, 950.0)
+        slope = np.clip(np.random.normal(float(str(valley["slope"])), 4.0), 5.0, 24.0)
+        elev = np.clip(np.random.normal(float(str(valley["elev"])), 30.0), 40.0, 950.0)
         litho = valley["litho"]
         r3d = np.random.exponential(scale=25.0)  # low antecedent rainfall
         rint = np.random.exponential(scale=3.5)
