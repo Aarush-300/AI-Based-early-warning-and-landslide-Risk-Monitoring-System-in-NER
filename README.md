@@ -1,4 +1,4 @@
-# TerrainTrace-NER (भू-दृष्टि / TerrainTrace)
+# TerrainTrace
 
 > **AI-Powered Real-Time Landslide Early Warning, Geotechnical Risk Modeling & GIS Disaster Management Platform for India's North Eastern Region (NER)**  
 > *Smart India Hackathon (SIH 2026) Prototype*
